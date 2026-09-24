@@ -124,7 +124,10 @@ fun IdeaEditorScreen(
                         viewModel.closeAndSave()
                         onBack()
                     }) {
-                        Icon(ImageVector.vectorResource(R.drawable.arrow_back_24px), contentDescription = "Back")
+                        Icon(
+                            ImageVector.vectorResource(R.drawable.arrow_back_24px),
+                            contentDescription = stringResource(R.string.access_back)
+                        )
                     }
                 },
                 title = {},
@@ -132,7 +135,7 @@ fun IdeaEditorScreen(
                     ExpressiveIconButton(
                         onClick = { showColorSheet = true },
                         imageVector = ImageVector.vectorResource(R.drawable.palette_24px),
-                        contentDescription = "Change background color",
+                        contentDescription = stringResource(R.string.access_change_background_color),
                         containerColor = cardColor,
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
@@ -144,7 +147,7 @@ fun IdeaEditorScreen(
                                 onBack()
                             },
                             imageVector = ImageVector.vectorResource(R.drawable.delete_24px),
-                            contentDescription = "Delete idea",
+                            contentDescription = stringResource(R.string.access_delete_idea),
                             containerColor = cardColor
                         )
                         Spacer(modifier = Modifier.width(10.dp))

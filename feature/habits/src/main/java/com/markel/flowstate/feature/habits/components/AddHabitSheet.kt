@@ -71,6 +71,7 @@ import java.time.DayOfWeek
 import java.time.format.TextStyle
 import com.markel.flowstate.feature.habits.R
 import com.markel.flowstate.feature.habits.util.formatFloat
+import com.markel.flowstate.feature.habits.util.parseFloat
 import com.markel.flowstate.core.designsystem.R as DesignR
 
 private val habitColors = listOf(
@@ -125,8 +126,8 @@ fun AddHabitSheet(
         mutableStateOf(initialScheduledDays.toSet())
     }
 
-    val parsedTarget = targetValueText.toFloatOrNull()
-    val parsedStep = stepText.toFloatOrNull()
+    val parsedTarget = parseFloat(targetValueText)
+    val parsedStep = parseFloat(stepText)
     val isTargetInvalid = habitType == HabitType.NUMERIC && targetValueText.isNotBlank() && (parsedTarget == null || parsedTarget <= 0f)
     val isStepInvalid = habitType == HabitType.NUMERIC && stepText.isNotBlank() && (parsedStep == null || parsedStep <= 0f)
 
@@ -202,7 +203,7 @@ fun AddHabitSheet(
                             label = { Text(stringResource(R.string.habit_unit_label)) },
                             placeholder = {
                                 Text(
-                                    text = "km, h, kg...",
+                                    text = stringResource(R.string.habit_unit_placeholder),
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                 )
                             },
@@ -251,7 +252,7 @@ fun AddHabitSheet(
                         value = stepText,
                         onValueChange = { stepText = it },
                         label = { Text(stringResource(R.string.habit_step_label)) },
-                        placeholder = { Text("1, 0.5 ...") },
+                        placeholder = { Text(stringResource(R.string.habit_step_placeholder)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         shape = MaterialTheme.shapes.large,
@@ -381,8 +382,8 @@ fun AddHabitSheet(
                 }
                 Button(
                     onClick = {
-                        val target = targetValueText.toFloatOrNull()
-                        val step = stepText.toFloatOrNull() ?: 1f
+                        val target = parseFloat(targetValueText)
+                        val step = parseFloat(stepText) ?: 1f
                         onConfirm(
                             name,
                             selectedIcon,
@@ -481,7 +482,7 @@ private fun IconChoice(
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(vector ?: DesignR.drawable.block_24px),
-            contentDescription = iconName,
+            contentDescription = habitIconDescription(iconName),
             tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
             else MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -539,3 +540,33 @@ private fun ColorDot(
         }
     }
 }
+
+@Composable
+private fun habitIconDescription(iconName: String): String = stringResource(
+    when (iconName) {
+        "none" -> R.string.habit_icon_none
+        "self_improvement" -> R.string.habit_icon_self_improvement
+        "fitness_center" -> R.string.habit_icon_fitness_center
+        "directions_run" -> R.string.habit_icon_directions_run
+        "directions_bike" -> R.string.habit_icon_directions_bike
+        "book" -> R.string.habit_icon_book
+        "bedtime" -> R.string.habit_icon_bedtime
+        "shower" -> R.string.habit_icon_shower
+        "cleaning" -> R.string.habit_icon_cleaning
+        "dentistry" -> R.string.habit_icon_dentistry
+        "language" -> R.string.habit_icon_language
+        "laundry" -> R.string.habit_icon_laundry
+        "nutrition" -> R.string.habit_icon_nutrition
+        "recycling" -> R.string.habit_icon_recycling
+        "shopping" -> R.string.habit_icon_shopping
+        "water" -> R.string.habit_icon_water
+        "assignment" -> R.string.habit_icon_assignment
+        "pets" -> R.string.habit_icon_pets
+        "washoku" -> R.string.habit_icon_washoku
+        "pool" -> R.string.habit_icon_pool
+        "hiking" -> R.string.habit_icon_hiking
+        "pill" -> R.string.habit_icon_pill
+        "nature" -> R.string.habit_icon_nature
+        else -> R.string.habit_icon_none
+    }
+)

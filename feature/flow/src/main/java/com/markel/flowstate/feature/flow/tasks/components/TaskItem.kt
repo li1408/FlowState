@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -185,7 +186,7 @@ fun DeleteSwipeBackground(
         if (isDeleteDirection) {
             Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.delete_24px),
-                contentDescription = "Delete",
+                contentDescription = stringResource(R.string.access_delete),
                 tint = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.graphicsLayer {
                     scaleX = scale

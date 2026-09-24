@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="noth_new">当天没有安排</string>
+    <string name="today">今天</string>
+    <string name="tomorrow">明天</string>
+    <string name="yesterday">昨天</string>
+    <string name="toggle">任务已标记为未完成</string>
+    <string name="undo">撤销</string>
+    <string name="add_task">添加任务</string>
+    <string name="mark_as_incomplete">标记为未完成</string>
+    <string name="mark_as_complete">标记为已完成</string>
+</resources>

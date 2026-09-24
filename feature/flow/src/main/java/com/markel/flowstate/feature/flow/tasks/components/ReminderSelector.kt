@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -213,9 +214,9 @@ fun ReminderSelector(
                                 ImageVector.vectorResource(R.drawable.keyboard_alt_24px)
                             },
                             contentDescription = if (isKeyboardMode) {
-                                "Switch to clock"
+                                stringResource(R.string.access_switch_to_clock)
                             } else {
-                                "Switch to keyboard"
+                                stringResource(R.string.access_switch_to_keyboard)
                             },
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
@@ -316,7 +317,7 @@ fun ReminderSelector(
         ) {
             Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.notification_add_24px),
-                contentDescription = "Notification",
+                contentDescription = stringResource(R.string.access_notification),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -334,14 +335,28 @@ fun formatReminderDateTime(timestamp: Long): String {
     val time = zdt.toLocalTime()
     val today = LocalDate.now()
 
-    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
-    val timePattern = if (is24Hour) "HH:mm" else "h:mm a"
-    val timeStr = DateTimeFormatter.ofPattern(timePattern).format(time)
+    val context = LocalContext.current
+    val locale = LocalLocale.current.platformLocale
+    val is24Hour = DateFormat.is24HourFormat(context)
+    val timeFormatter = remember(locale, is24Hour) {
+        val skeleton = if (is24Hour) "Hm" else "hm"
+        DateTimeFormatter.ofPattern(
+            DateFormat.getBestDateTimePattern(locale, skeleton),
+            locale
+        )
+    }
+    val dateFormatter = remember(locale) {
+        DateTimeFormatter.ofPattern(
+            DateFormat.getBestDateTimePattern(locale, "MMMd"),
+            locale
+        )
+    }
+    val timeStr = timeFormatter.format(time)
     val dateStr = when (date) {
         today -> stringResource(R.string.today)
         today.plusDays(1) -> stringResource(R.string.tomorrow)
         today.minusDays(1) -> stringResource(R.string.yesterday)
-        else -> DateTimeFormatter.ofPattern("d MMM").format(date)
+        else -> dateFormatter.format(date)
     }
     return "$dateStr $timeStr"
 }

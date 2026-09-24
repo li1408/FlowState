@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.markel.flowstate.core.designsystem.R
@@ -44,7 +45,7 @@ fun AnimatedUndoFab(
         ) {
             Icon(
                 imageVector = ImageVector.vectorResource(R.drawable.undo_24px),
-                contentDescription = "Undo"
+                contentDescription = stringResource(R.string.undo)
             )
         }
     }

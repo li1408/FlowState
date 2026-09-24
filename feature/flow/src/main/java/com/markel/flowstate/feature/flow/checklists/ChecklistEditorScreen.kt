@@ -129,7 +129,10 @@ fun CheckListEditorScreen(
                         viewModel.closeAndSave()
                         onBack()
                     }) {
-                        Icon(ImageVector.vectorResource(R.drawable.arrow_back_24px), contentDescription = "Back")
+                        Icon(
+                            ImageVector.vectorResource(R.drawable.arrow_back_24px),
+                            contentDescription = stringResource(R.string.access_back)
+                        )
                     }
                 },
                 title = {},
@@ -137,7 +140,7 @@ fun CheckListEditorScreen(
                     ExpressiveIconButton(
                         onClick = { showColorSheet = true },
                         imageVector = ImageVector.vectorResource(R.drawable.palette_24px),
-                        contentDescription = "Change background color",
+                        contentDescription = stringResource(R.string.access_change_background_color),
                         containerColor = cardColor,
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
@@ -149,7 +152,7 @@ fun CheckListEditorScreen(
                             onBack()
                             },
                             imageVector = ImageVector.vectorResource(R.drawable.delete_24px),
-                            contentDescription = "Delete checklist",
+                            contentDescription = stringResource(R.string.access_delete_checklist),
                             containerColor = cardColor,
                         )
                         Spacer(modifier = Modifier.width(10.dp))
@@ -298,7 +301,11 @@ fun CheckListEditorScreen(
                         )
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.expand_more_40px),
-                            contentDescription = if (completedExpanded) "Collapse" else "Expand",
+                            contentDescription = if (completedExpanded) {
+                                stringResource(R.string.access_collapse)
+                            } else {
+                                stringResource(R.string.access_expand)
+                            },
                             tint = onCardColor.copy(alpha = 0.45f),
                             modifier = Modifier
                                 .size(20.dp)

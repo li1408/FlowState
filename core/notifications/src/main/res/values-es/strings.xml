@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="notification_action_complete">Marcar como completeda</string>
+    <string name="notification_channel_name">Recordatorios de tareas</string>
+    <string name="notification_channel_description">Notificaciones para recordatorios de tareas programadas</string>
 </resources>

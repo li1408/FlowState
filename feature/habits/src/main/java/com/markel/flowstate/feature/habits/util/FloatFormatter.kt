@@ -1,5 +1,8 @@
 package com.markel.flowstate.feature.habits.util
 
+import java.math.RoundingMode
+import java.text.NumberFormat
+import java.text.ParsePosition
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.round
@@ -24,7 +27,30 @@ fun formatFloat(value: Float): String {
         // The value is effectively a whole number
         rounded.toInt().toString()
     } else {
-        // True decimal – format to 2 dp and strip trailing zeros
-        String.format(Locale.US, "%.2f", value).trimEnd('0').trimEnd('.')
+        // True decimal – format to 2 dp using the active app locale.
+        NumberFormat.getNumberInstance(Locale.getDefault()).apply {
+            maximumFractionDigits = 2
+            minimumFractionDigits = 0
+            isGroupingUsed = false
+            roundingMode = RoundingMode.HALF_UP
+        }.format(value.toDouble())
     }
+}
+
+/** Parses an editable decimal using either the active locale or a decimal point. */
+fun parseFloat(text: String): Float? {
+    val value = text.trim()
+    if (value.isEmpty()) return null
+
+    value.toFloatOrNull()?.let { parsed ->
+        if (parsed.isFinite()) return parsed
+    }
+
+    val position = ParsePosition(0)
+    val parsed = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
+        isGroupingUsed = false
+    }.parse(value, position) ?: return null
+
+    if (position.index != value.length) return null
+    return parsed.toFloat().takeIf { it.isFinite() }
 }

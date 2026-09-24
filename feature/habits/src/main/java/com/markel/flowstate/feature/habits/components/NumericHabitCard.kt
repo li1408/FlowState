@@ -384,7 +384,7 @@ fun NumericHabitCard(
                         }
                         Icon(
                             imageVector = ImageVector.vectorResource(DesignR.drawable.edit_24px),
-                            contentDescription = "Edit value",
+                            contentDescription = stringResource(R.string.access_edit_value),
                             modifier = Modifier
                                 .padding(start = 12.dp)
                                 .size(22.dp),
@@ -441,7 +441,7 @@ fun NumericHabitCard(
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(DesignR.drawable.remove_24px),
-                            contentDescription = "Decrement",
+                            contentDescription = stringResource(R.string.access_decrease),
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -492,7 +492,7 @@ fun NumericHabitCard(
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.add_24px),
-                            contentDescription = "Increment",
+                            contentDescription = stringResource(R.string.access_increase),
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onSurface
                         )

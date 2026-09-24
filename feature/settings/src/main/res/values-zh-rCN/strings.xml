@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings">设置</string>
+    <string name="settings_general">通用</string>
+    <string name="settings_notifications">通知</string>
+    <string name="settings_notifications_description">管理提醒通知</string>
+    <string name="settings_appearance">外观</string>
+    <string name="settings_appearance_description">主题与颜色</string>
+    <string name="settings_language">语言</string>
+    <string name="settings_language_description">更改应用语言</string>
+    <string name="settings_info">信息</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_about_description">FlowState v%1$s</string>
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+
+    <string name="bottom_nav_config_title">底部导航</string>
+    <string name="settings_bottom_nav_description">调整底部导航布局</string>
+    <string name="bottom_nav_visible_tabs">显示的标签页</string>
+    <string name="bottom_nav_hidden_tabs">隐藏的标签页</string>
+    <string name="bottom_nav_show">显示</string>
+    <string name="bottom_nav_hide">隐藏</string>
+    <string name="bottom_nav_required">固定</string>
+    <string name="bottom_nav_drag_hint">拖动调整顺序</string>
+    <string name="tab_flow">事项</string>
+    <string name="tab_calendar">日历</string>
+    <string name="tab_habits">习惯</string>
+    <string name="tab_mood">心情</string>
+    <string name="tab_settings">设置</string>
+
+    <string name="about_title">关于</string>
+    <string name="about_app_name">FlowState</string>
+    <string name="about_developer">开发者</string>
+    <string name="about_developer_name">Markel</string>
+    <string name="about_license">开源许可</string>
+    <string name="about_license_description">Apache-2.0</string>
+    <string name="about_version">版本 %1$s</string>
+    <string name="about_github">GitHub</string>
+
+    <string name="settings_notifications_enabled">点按前往系统设置管理</string>
+    <string name="settings_notifications_disabled">点按前往系统设置开启</string>
+
+    <string name="settings_appearance_theme">主题</string>
+    <string name="settings_appearance_colors">颜色</string>
+    <string name="settings_app_theme">应用主题</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="settings_pure_surfaces">纯色界面</string>
+    <string name="settings_pure_surfaces_desc">深色模式使用纯黑背景，浅色模式使用纯白背景</string>
+    <string name="settings_system_font">系统字体</string>
+    <string name="settings_system_font_desc">使用设备字体</string>
+    <string name="settings_dynamic_color">动态配色</string>
+    <string name="settings_dynamic_color_desc">根据壁纸调整应用颜色（Android 12 及以上）</string>
+    <string name="settings_dynamic_color_unavailable">需要 Android 12 或更高版本</string>
+
+    <string name="settings_integrations">数据管理</string>
+    <string name="settings_integrations_description">导出与恢复数据</string>
+
+    <string name="backup_title">备份</string>
+    <string name="backup_export">导出数据</string>
+    <string name="backup_export_description">将全部数据保存为 JSON 文件</string>
+    <string name="backup_restore">恢复数据</string>
+    <string name="backup_restore_description">从备份文件恢复数据</string>
+    <string name="backup_file_name">FlowState-备份-%1$s.json</string>
+
+    <string name="categories_title">分类</string>
+    <string name="categories_settings_description">使用分类标签页整理事项</string>
+    <string name="categories_enabled">启用分类</string>
+    <string name="categories_enabled_description">在事项页面显示分类标签页</string>
+    <string name="categories_list">分类</string>
+    <string name="categories_add">添加分类</string>
+    <string name="categories_create">新建分类</string>
+    <string name="categories_name_label">分类名称</string>
+    <string name="categories_delete">删除</string>
+    <string name="categories_delete_title">删除“%1$s”？</string>
+    <string name="categories_delete_message">如何处理此分类中的事项？</string>
+    <string name="categories_move_to_general">移至常规</string>
+    <string name="categories_delete_permanently">删除事项</string>
+    <string name="category_general">常规</string>
+    <string name="categories_name_reserved">“常规”是保留名称</string>
+    <string name="categories_rename">重命名</string>
+    <string name="categories_rename_general_title">重命名常规列表</string>
+    <string name="categories_reset_general">恢复默认</string>
+    <string name="categories_rename_title">重命名分类</string>
+
+    <string name="achievements_title">成就</string>
+    <string name="achievements_settings_description">查看你的里程碑与进度</string>
+    <string name="achievements_hero_label">已解锁等级</string>
+    <string name="achievements_hero_complete">★ 已全部收集</string>
+    <string name="achievements_hero_of">共 %1$d 级</string>
+    <string name="achievement_level_chip">等级 %1$d / %2$d</string>
+    <string name="achievement_progress_format">%1$d / %2$d</string>
+    <string name="achievement_max_level">最高等级</string>
+    <string name="achievements_section_locked">待解锁</string>
+    <string name="achievements_section_in_progress">进行中</string>
+    <string name="achievements_section_completed">已完成</string>
+    <string name="achievement_perfect_day_name">完美一天</string>
+    <string name="achievement_perfect_day_desc">完成某一天计划的全部习惯</string>
+    <string name="achievement_streak_name">连续不断</string>
+    <string name="achievement_streak_desc">保持习惯连续，在计划日从不缺席</string>
+    <string name="achievement_unstoppable_name">势不可挡</string>
+    <string name="achievement_unstoppable_desc">反复完成习惯，每一次完成都会计入</string>
+    <string name="achievement_night_owl_name">夜猫子</string>
+    <string name="achievement_night_owl_desc">在 0:00 至 5:00 之间完成任务</string>
+    <string name="achievement_flawless_monday_name">完美周一</string>
+    <string name="achievement_flawless_monday_desc">完成周一计划的全部习惯</string>
+    <string name="achievement_sunday_fun_day_name">高效周日</string>
+    <string name="achievement_sunday_fun_day_desc">在同一个周日完成多项任务</string>
+    <string name="achievement_flawless_week_name">完美一周</string>
+    <string name="achievement_flawless_week_desc">连续一周完成所有计划习惯</string>
+    <string name="achievement_comeback_name">重新出发</string>
+    <string name="achievement_comeback_desc">连续错过 3 次后重新开始一个习惯</string>
+    <string name="achievement_task_total_name">清单达人</string>
+    <string name="achievement_task_total_desc">不断完成任务，每次勾选都会计入</string>
+    <string name="achievement_early_bird_name">早起鸟</string>
+    <string name="achievement_early_bird_desc">在早上 7 点前完成任务</string>
+    <string name="achievement_on_time_name">准时完成</string>
+    <string name="achievement_on_time_desc">在截止日期前完成任务</string>
+    <string name="achievement_productive_morning_name">高效早晨</string>
+    <string name="achievement_productive_morning_desc">在同一天中午前完成 3 项任务</string>
+</resources>

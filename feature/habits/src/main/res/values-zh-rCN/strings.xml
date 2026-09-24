@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add_habit_dialog_title">新建习惯</string>
+    <string name="add_habit_typed_title">新建%1$s习惯</string>
+    <string name="habit_input_of_target">目标 %1$s</string>
+    <string name="habit_input_remaining">还差 %1$s</string>
+    <string name="habit_input_goal_reached">目标已达成！</string>
+    <string name="add_habit_name_label">名称</string>
+    <string name="add_habit_color_label">颜色</string>
+    <string name="habit_schedule_title">每周执行日</string>
+    <string name="habit_schedule_at_least_one">请至少选择一天</string>
+    <string name="habit_not_scheduled_today">今天没有安排</string>
+    <string name="add_habit_create_button">创建</string>
+    <string name="add_habit_cancel_button">取消</string>
+    <string name="habit">习惯</string>
+
+    <string name="habit_empty_state_description">点按 + 创建第一个习惯</string>
+
+    <string name="delete_habit_dialog_title">删除习惯</string>
+    <string name="delete_habit_dialog_message">删除“%1$s”？历史记录将一并清除</string>
+    <string name="delete_habit_confirm_button">删除</string>
+    <string name="delete_habit_cancel_button">取消</string>
+    <string name="icon">图标</string>
+    <string name="habit_menu_edit">编辑</string>
+    <string name="edit_habit_dialog_title">编辑习惯</string>
+    <string name="edit_habit_save_button">保存</string>
+    <string name="habit_empty_state_title">还没有习惯</string>
+    <string name="habit_type">习惯类型</string>
+    <string name="habit_type_boolean">打卡型</string>
+    <string name="habit_type_numeric">可量化</string>
+    <string name="habit_unit_label">单位</string>
+    <string name="habit_unit_placeholder">公里、小时、千克…</string>
+    <string name="habit_target_label">目标</string>
+    <string name="habit_target_optional">可选</string>
+    <string name="habit_target_preview">每日目标：%1$s %2$s</string>
+    <string name="habit_target_error">目标必须大于 0，也可以留空</string>
+    <string name="habit_step_label">步长</string>
+    <string name="habit_step_placeholder">1 或 0.5…</string>
+    <string name="habit_step_explanation">每次点按 +/− 按钮增减的数值</string>
+    <string name="habit_step_error">步长必须大于 0，也可以留空</string>
+    <string name="habit_clean_amount">清除记录</string>
+    <string name="habit_pill_streak_days">%1$d 天</string>
+    <string name="habit_input_dialog_title">记录“%1$s”</string>
+    <string name="habit_input_label_unit">数量（%1$s）</string>
+    <string name="habit_input_label_plain">数量</string>
+    <string name="habit_input_confirm">记录</string>
+
+    <string name="habit_detail_since">开始于 %1$s · 已完成 %2$d 天</string>
+    <string name="habit_detail_streak_current">当前连续天数</string>
+    <string name="habit_detail_streak_best">最长连续天数</string>
+    <string name="habit_detail_section_summary">概览</string>
+    <string name="habit_detail_section_history">历史</string>
+    <string name="habit_detail_section_weekly">每周统计（%1$s）</string>
+    <string name="habit_detail_section_weekly_empty">每周统计</string>
+    <string name="habit_detail_section_radar">各星期完成率</string>
+    <string name="habit_detail_this_week">本周</string>
+    <string name="habit_detail_no_data">暂无数据</string>
+    <string name="habit_detail_pct_month">本月</string>
+    <string name="habit_detail_pct_3months">近 3 个月</string>
+    <string name="habit_detail_pct_year">今年</string>
+    <string name="habit_detail_average">平均值</string>
+    <string name="habit_detail_evolution">趋势 · 近 10 天</string>
+    <string name="habit_detail_today">今天</string>
+    <string name="habit_detail_vs">较昨日</string>
+    <string name="habit_summary_started_on">开始于 %1$s</string>
+    <string name="habit_summary_streak_header">连续记录</string>
+    <string name="habit_summary_current_label">当前</string>
+    <string name="habit_summary_best_label">最佳</string>
+    <string name="habit_summary_days_suffix">天</string>
+    <string name="habit_summary_consistency_label">完成率</string>
+    <string name="habit_heatmap">热力图</string>
+    <string name="habit_heatmap_weeks">%d 周</string>
+    <string name="habit_heatmap_less">较少</string>
+    <string name="habit_heatmap_more">较多</string>
+    <string name="habit_heatmap_unscheduled">未安排</string>
+    <string name="habit_heatmap_day_cd">%1$s：%2$s</string>
+    <string name="habit_heatmap_day_empty_cd">%1$s：无数据</string>
+    <string name="habit_dist_title">平均值</string>
+    <string name="habit_dist_no_data">数据不足</string>
+    <string name="habit_dist_recorded_amounts">已记录数量 %1$s</string>
+    <string name="habit_dist_unit_prefix">单位：%1$s</string>
+    <string name="habit_monthly_goal">月度目标</string>
+    <string name="habit_monthly_completed">已完成</string>
+    <string name="habit_monthly_label">本月（%1$s）</string>
+    <string name="habit_deficit_label">累计差额：%1$s %2$s</string>
+    <string name="habit_days_completed">已完成 %1$d/%2$d 天</string>
+    <string name="weekly_bars_2m">2 个月</string>
+    <string name="weekly_bars_4m">4 个月</string>
+    <string name="weekly_bars_8m">8 个月</string>
+    <string name="weekly_bars_1y">1 年</string>
+
+    <!-- 无障碍与范围标签 -->
+    <string name="access_close_menu">关闭菜单</string>
+    <string name="access_add_habit">添加习惯</string>
+    <string name="access_edit_value">编辑数值</string>
+    <string name="access_decrease">减少</string>
+    <string name="access_increase">增加</string>
+    <string name="access_back">返回</string>
+    <string name="view_range_one_month">1 个月</string>
+    <string name="view_range_three_months">3 个月</string>
+    <string name="view_range_one_year">1 年</string>
+
+    <!-- 习惯图标说明 -->
+    <string name="habit_icon_none">无图标</string>
+    <string name="habit_icon_self_improvement">冥想</string>
+    <string name="habit_icon_fitness_center">力量训练</string>
+    <string name="habit_icon_directions_run">跑步</string>
+    <string name="habit_icon_directions_bike">骑行</string>
+    <string name="habit_icon_book">阅读</string>
+    <string name="habit_icon_bedtime">睡眠</string>
+    <string name="habit_icon_shower">洗澡</string>
+    <string name="habit_icon_cleaning">清洁</string>
+    <string name="habit_icon_dentistry">牙齿护理</string>
+    <string name="habit_icon_language">语言学习</string>
+    <string name="habit_icon_laundry">洗衣</string>
+    <string name="habit_icon_nutrition">营养</string>
+    <string name="habit_icon_recycling">回收</string>
+    <string name="habit_icon_shopping">购物</string>
+    <string name="habit_icon_water">喝水</string>
+    <string name="habit_icon_assignment">计划</string>
+    <string name="habit_icon_pets">宠物照料</string>
+    <string name="habit_icon_washoku">用餐</string>
+    <string name="habit_icon_pool">游泳</string>
+    <string name="habit_icon_hiking">徒步</string>
+    <string name="habit_icon_pill">用药</string>
+    <string name="habit_icon_nature">自然</string>
+
+    <string-array name="motivational_keywords">
+        <item>稳住节奏。</item>
+        <item>就是今天。</item>
+        <item>再走一步。</item>
+        <item>微小的事，</item>
+        <item>别找借口。</item>
+        <item>你可以的。</item>
+        <item>继续前进。</item>
+    </string-array>
+    <string-array name="motivational_rests">
+        <item>持续才是进步的秘密</item>
+        <item>这是向前迈进的最好时机</item>
+        <item>每天都离目标更近</item>
+        <item>重复做就会变得了不起</item>
+        <item>一次专注一个习惯</item>
+        <item>你以前也做到过</item>
+        <item>进步从不停下</item>
+    </string-array>
+</resources>

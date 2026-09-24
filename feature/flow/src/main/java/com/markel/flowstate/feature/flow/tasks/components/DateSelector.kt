@@ -1,5 +1,6 @@
 package com.markel.flowstate.feature.flow.tasks.components
 
+import android.text.format.DateFormat
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -171,7 +173,7 @@ fun DateSelector(
             ) {
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.calendar_today_24px),
-                    "Date",
+                    contentDescription = stringResource(R.string.task_meta_add_date),
                     tint = if (dueDate != null) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -192,11 +194,18 @@ fun formatDate(timestamp: Long?): String {
     if (timestamp == null) return ""
     val date = Instant.ofEpochMilli(timestamp).atZone(ZoneId.of("UTC")).toLocalDate()
     val today = LocalDate.now()
+    val locale = LocalLocale.current.platformLocale
+    val dateFormatter = remember(locale) {
+        DateTimeFormatter.ofPattern(
+            DateFormat.getBestDateTimePattern(locale, "MMMd"),
+            locale
+        )
+    }
 
     return when(date) {
         today -> stringResource(R.string.today)
         today.plusDays(1) -> stringResource(R.string.tomorrow)
         today.minusDays(1) -> stringResource(R.string.yesterday)
-        else -> DateTimeFormatter.ofPattern("d MMM").format(date)
+        else -> dateFormatter.format(date)
     }
 }

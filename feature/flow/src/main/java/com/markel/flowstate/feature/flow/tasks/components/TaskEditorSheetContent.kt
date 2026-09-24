@@ -410,7 +410,11 @@ fun TaskEditorSheetContent(
                 )
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.expand_more_40px),
-                    contentDescription = if (completedExpanded) "Collapse" else "Expand",
+                    contentDescription = if (completedExpanded) {
+                        stringResource(R.string.access_collapse)
+                    } else {
+                        stringResource(R.string.access_expand)
+                    },
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
                     modifier = Modifier
                         .size(20.dp)

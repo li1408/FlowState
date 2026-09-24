@@ -54,7 +54,7 @@ fun TaskEditorTopBar(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.arrow_back_24px),
-                    contentDescription = "Close"
+                    contentDescription = stringResource(R.string.access_close)
                 )
             }
         },
@@ -74,7 +74,7 @@ fun TaskEditorTopBar(
                 }) {
                     Icon(
                         imageVector = ImageVector.vectorResource(priority.flagIconRes()),
-                        contentDescription = "Priority",
+                        contentDescription = stringResource(R.string.access_priority),
                         tint = priority.asColor(),
                         modifier = Modifier.size(24.dp)
                     )
@@ -84,7 +84,7 @@ fun TaskEditorTopBar(
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.more_vert_24px),
-                            contentDescription = "More options"
+                            contentDescription = stringResource(R.string.access_more_options)
                         )
                     }
                     DropdownMenu(

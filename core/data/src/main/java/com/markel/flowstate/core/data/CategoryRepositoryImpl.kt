@@ -19,8 +19,11 @@ class CategoryRepositoryImpl @Inject constructor(
     override suspend fun getCategoryById(id: Int): Category? =
         categoryDao.getCategoryById(id)?.toDomain()
 
-    override suspend fun upsertCategory(category: Category): Long =
-        categoryDao.upsertCategory(category.toEntity())
+    override suspend fun upsertCategory(category: Category): Long {
+        val trimmedName = category.name.trim()
+        if (trimmedName.isBlank() || Category.isReservedGeneralName(trimmedName)) return -1L
+        return categoryDao.upsertCategory(category.copy(name = trimmedName).toEntity())
+    }
 
     override suspend fun deleteCategory(id: Int) =
         categoryDao.deleteCategory(id)
@@ -44,9 +47,7 @@ class CategoryRepositoryImpl @Inject constructor(
     override suspend fun createCategory(name: String): Long {
         val trimmed = name.trim()
         if (trimmed.isBlank()) return -1L
-        // "General" is a reserved name — it would be confusing to have a user
-        // category with the same display name as the built-in General tab.
-        if (trimmed.equals("General", ignoreCase = true)) return -1L
+        if (Category.isReservedGeneralName(trimmed)) return -1L
 
         val currentList = getCategories().first()
         val maxPosition = currentList.maxOfOrNull { it.position } ?: -1

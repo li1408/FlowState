@@ -18,8 +18,6 @@ class NotificationHelper @Inject constructor(
 
     companion object {
         const val CHANNEL_ID = "task_reminders"
-        private const val CHANNEL_NAME = "Task Reminders"
-        private const val CHANNEL_DESCRIPTION = "Notifications for scheduled task reminders"
     }
 
     private val notificationManager =
@@ -32,10 +30,10 @@ class NotificationHelper @Inject constructor(
     private fun createChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            CHANNEL_NAME,
+            context.getString(R.string.notification_channel_name),
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = CHANNEL_DESCRIPTION
+            description = context.getString(R.string.notification_channel_description)
             enableVibration(true)
         }
         notificationManager.createNotificationChannel(channel)

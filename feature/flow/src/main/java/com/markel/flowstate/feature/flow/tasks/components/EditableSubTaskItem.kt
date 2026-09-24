@@ -213,7 +213,7 @@ fun EditableSubTaskItem(
                         IconButton(onClick = { onExpandChange(false) }) {
                             Icon(
                                 imageVector = ImageVector.vectorResource(R.drawable.close_24px),
-                                contentDescription = "Cancel edit",
+                                contentDescription = stringResource(R.string.access_cancel_edit),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -326,7 +326,7 @@ fun EditableSubTaskItem(
                             }) {
                                 Icon(
                                     imageVector = ImageVector.vectorResource(editedPriority.flagIconRes()),
-                                    contentDescription = "Priority",
+                                    contentDescription = stringResource(R.string.access_priority),
                                     tint = editedPriority.asColor(),
                                     modifier = Modifier.size(22.dp)
                                 )
@@ -349,7 +349,7 @@ fun EditableSubTaskItem(
                             ) {
                                 Icon(
                                     imageVector = ImageVector.vectorResource(R.drawable.delete_24px),
-                                    contentDescription = "Delete",
+                                    contentDescription = stringResource(R.string.access_delete),
                                     modifier = Modifier.size(22.dp)
                                 )
                             }
@@ -377,7 +377,7 @@ fun EditableSubTaskItem(
                             ) {
                                 Icon(
                                     imageVector = ImageVector.vectorResource(R.drawable.send),
-                                    contentDescription = "Save",
+                                    contentDescription = stringResource(R.string.access_save),
                                     modifier = Modifier.size(20.dp),
                                     tint = if (editedTitle.isNotBlank())
                                         MaterialTheme.colorScheme.onPrimary

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="notification_action_complete">Mark completed</string>
+    <string name="notification_channel_name">Task Reminders</string>
+    <string name="notification_channel_description">Notifications for scheduled task reminders</string>
 </resources>

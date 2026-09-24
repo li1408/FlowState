@@ -74,6 +74,20 @@ class CategoryRepositoryImplTest {
     }
 
     @Test
+    fun createCategory_withSimplifiedChineseGeneralName_doesNotCallDao() = runTest {
+        repository.createCategory("常规")
+
+        coVerify(exactly = 0) { categoryDao.upsertCategory(any()) }
+    }
+
+    @Test
+    fun upsertCategory_withSimplifiedChineseGeneralName_doesNotCallDao() = runTest {
+        repository.upsertCategory(Category(id = 2, name = "常规", position = 1))
+
+        coVerify(exactly = 0) { categoryDao.upsertCategory(any()) }
+    }
+
+    @Test
     fun reorderCategories_persistsNewPositionsIndexedFromZero() = runTest {
         val stored = listOf(
             Category(id = 1, name = "A", position = 5),

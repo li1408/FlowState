@@ -1,5 +1,6 @@
 package com.markel.flowstate.feature.habits.details.components.numeric
 
+import android.text.format.DateFormat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -23,8 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
-import java.time.format.TextStyle
-import java.util.Locale
+import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
@@ -39,6 +39,13 @@ fun NumericEvolutionCard(
     unit: String?,
     modifier: Modifier = Modifier
 ) {
+    val locale = LocalLocale.current.platformLocale
+    val shortDateFormatter = remember(locale) {
+        DateTimeFormatter.ofPattern(
+            DateFormat.getBestDateTimePattern(locale, "MMMd"),
+            locale
+        )
+    }
     val maxValue = dailyValues.maxOfOrNull { it.second } ?: targetValue ?: 10f
     val scaleMax = maxOf(maxValue, targetValue ?: 0f) * 1.2f
 
@@ -143,7 +150,7 @@ fun NumericEvolutionCard(
                 Text(
                     text = displayDate?.let {
                         if (selectedDay != null) {
-                            "${it.dayOfMonth} ${it.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
+                            it.format(shortDateFormatter)
                         } else stringResource(R.string.habit_detail_today)
                     } ?: stringResource(R.string.habit_detail_today),
                     style = MaterialTheme.typography.labelSmall,
@@ -326,7 +333,7 @@ fun NumericEvolutionCard(
         ) {
             dailyValues.firstOrNull()?.first?.let { date ->
                 Text(
-                    text = "${date.dayOfMonth} ${date.month.getDisplayName(TextStyle.SHORT, LocalLocale.current.platformLocale)}",
+                    text = date.format(shortDateFormatter),
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

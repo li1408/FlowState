@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_action_complete">标记为已完成</string>
+    <string name="notification_channel_name">任务提醒</string>
+    <string name="notification_channel_description">按计划发送任务提醒通知</string>
+</resources>

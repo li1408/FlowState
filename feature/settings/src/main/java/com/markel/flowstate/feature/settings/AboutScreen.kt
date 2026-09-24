@@ -229,7 +229,7 @@ private fun AppCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "v$appVersion",
+                    text = stringResource(R.string.about_version, appVersion),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -245,7 +245,7 @@ private fun AppCard(
                     imageVector = ImageVector.vectorResource(
                         R.drawable.github
                     ),
-                    contentDescription = "GitHub",
+                    contentDescription = stringResource(R.string.about_github),
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -312,7 +312,7 @@ private fun DeveloperCard(
                     imageVector = ImageVector.vectorResource(
                         R.drawable.github
                     ),
-                    contentDescription = "GitHub",
+                    contentDescription = stringResource(R.string.about_github),
                     modifier = Modifier.size(32.dp)
                 )
             }

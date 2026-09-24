@@ -37,6 +37,8 @@
     <string name="about_developer_name">Markel</string>
     <string name="about_license">Licencia</string>
     <string name="about_license_description">Apache-2.0</string>
+    <string name="about_version">v%1$s</string>
+    <string name="about_github">GitHub</string>
 
     <!-- Notifications -->
     <string name="settings_notifications_enabled">Haz click para desactivar desde los ajustes del sistema</string>
@@ -68,6 +70,7 @@
     <string name="backup_export_description">Guarda todos tus datos a un archivo JSON</string>
     <string name="backup_restore">Restaurar</string>
     <string name="backup_restore_description">Restaurar datos desde un archivo JSON</string>
+    <string name="backup_file_name">FlowState-Copia-%1$s.json</string>
 
     <!-- Categorías -->
     <string name="categories_title">Categorías</string>

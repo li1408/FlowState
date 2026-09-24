@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_description">显示并控制一个打卡型习惯</string>
+    <string name="choose_habit">选择习惯</string>
+    <string name="no_boolean_habits">你还没有打卡型习惯</string>
+    <string name="cancel">取消</string>
+    <string name="no_config">小组件尚未配置</string>
+    <string name="widget_rest_day_toast">“%1$s”今天休息，下次：%2$s</string>
+    <string name="widget_rest_day_toast_no_next">“%1$s”今天休息</string>
+    <string name="completed">已完成</string>
+</resources>

@@ -73,7 +73,7 @@ fun HabitDetailScreen(
             ) {
                 Icon(
                     imageVector = ImageVector.vectorResource(DesignR.drawable.arrow_back_24px),
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.access_back),
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.onSurface
                 )

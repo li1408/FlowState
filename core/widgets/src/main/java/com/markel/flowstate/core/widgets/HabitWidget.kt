@@ -74,7 +74,13 @@ class HabitWidget : GlanceAppWidget() {
 
         provideContent {
             GlanceTheme {
-                HabitWidgetContent(preloadedHabitId, initialHabit, initialEntries, repository)
+                HabitWidgetContent(
+                    preloadedHabitId,
+                    initialHabit,
+                    initialEntries,
+                    repository,
+                    context.getString(R.string.completed)
+                )
             }
         }
     }
@@ -84,7 +90,8 @@ class HabitWidget : GlanceAppWidget() {
         preloadedHabitId: Int,
         initialHabit: Habit?,
         initialEntries: List<LocalDate>,
-        repository: HabitRepository
+        repository: HabitRepository,
+        completedDescription: String,
     ) {
         val prefs = currentState<Preferences>()  // Observe preferences reactively
         val habitId = prefs[KEY_HABIT_ID] ?: preloadedHabitId
@@ -118,7 +125,8 @@ class HabitWidget : GlanceAppWidget() {
             iconName = currentHabit.iconName,
             isCompleted = isCompleted,
             isScheduledToday = isScheduledToday,
-            dayNumber = today.dayOfMonth
+            dayNumber = today.dayOfMonth,
+            completedDescription = completedDescription,
         )
     }
 
@@ -145,7 +153,8 @@ class HabitWidget : GlanceAppWidget() {
         iconName: String,
         isCompleted: Boolean,
         isScheduledToday: Boolean,
-        dayNumber: Int
+        dayNumber: Int,
+        completedDescription: String,
     ) {
         // On rest days (habit not scheduled today) the pill switches to the
         // muted surfaceVariant color role, so it reads as "nothing to do
@@ -211,7 +220,7 @@ class HabitWidget : GlanceAppWidget() {
                                 provider = ImageProvider(
                                     R.drawable.widget_badge_done
                                 ),
-                                contentDescription = "Completed",
+                                contentDescription = completedDescription,
                                 modifier = GlanceModifier.fillMaxSize(),
                                 colorFilter = ColorFilter.tint(badgeColor)
                             )

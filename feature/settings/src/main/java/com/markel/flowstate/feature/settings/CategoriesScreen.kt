@@ -313,7 +313,10 @@ fun CategoriesScreen(
     // ── Create category dialog ──────────────────────────────────
     if (showCreateDialog) {
         var categoryName by remember { mutableStateOf("") }
-        val isValid = categoryName.isNotBlank()
+        val trimmedName = categoryName.trim()
+        val generalName = stringResource(R.string.category_general)
+        val isReservedName = Category.isReservedGeneralName(trimmedName, generalName)
+        val isValid = trimmedName.isNotBlank() && !isReservedName
 
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
@@ -324,6 +327,12 @@ fun CategoriesScreen(
                     onValueChange = { categoryName = it },
                     label = { Text(stringResource(R.string.categories_name_label)) },
                     singleLine = true,
+                    isError = isReservedName,
+                    supportingText = if (isReservedName) {
+                        { Text(stringResource(R.string.categories_name_reserved)) }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -331,7 +340,7 @@ fun CategoriesScreen(
                 TextButton(
                     onClick = {
                         if (isValid) {
-                            viewModel.createCategory(categoryName.trim())
+                            viewModel.createCategory(trimmedName)
                             showCreateDialog = false
                         }
                     },
@@ -357,7 +366,11 @@ fun CategoriesScreen(
             is RenameTarget.Real -> target.currentName
         }
         var newName by remember(target) { mutableStateOf(initialValue) }
-        val isValid = newName.isNotBlank()
+        val trimmedName = newName.trim()
+        val generalName = stringResource(R.string.category_general)
+        val isReservedName = target is RenameTarget.Real &&
+            Category.isReservedGeneralName(trimmedName, generalName)
+        val isValid = trimmedName.isNotBlank() && !isReservedName
 
         AlertDialog(
             onDismissRequest = { showRenameDialog = null },
@@ -375,7 +388,12 @@ fun CategoriesScreen(
                     onValueChange = { newName = it },
                     label = { Text(stringResource(R.string.categories_name_label)) },
                     singleLine = true,
-                    isError = !isValid,
+                    isError = isReservedName,
+                    supportingText = if (isReservedName) {
+                        { Text(stringResource(R.string.categories_name_reserved)) }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -385,9 +403,9 @@ fun CategoriesScreen(
                         if (isValid) {
                             when (target) {
                                 is RenameTarget.General ->
-                                    viewModel.renameGeneralCategory(newName)
+                                    viewModel.renameGeneralCategory(trimmedName)
                                 is RenameTarget.Real ->
-                                    viewModel.renameCategory(target.id, newName)
+                                    viewModel.renameCategory(target.id, trimmedName)
                             }
                             showRenameDialog = null
                         }

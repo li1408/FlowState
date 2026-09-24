@@ -87,6 +87,7 @@ import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.Morph
 import com.markel.flowstate.feature.habits.R
 import com.markel.flowstate.feature.habits.util.formatFloat
+import com.markel.flowstate.feature.habits.util.parseFloat
 import com.markel.flowstate.core.designsystem.R as DesignR
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -96,8 +97,8 @@ private const val HOLD_REPEAT_START_MS = 170L
 private const val HOLD_REPEAT_MIN_MS = 60L
 private const val HOLD_REPEAT_ACCEL_MS = 22L
 
-/** Accepts "", "12", "12.", "12.5" — anything else is rejected per keystroke. */
-private val decimalInputRegex = Regex("^\\d*\\.?\\d*$")
+/** Accepts both decimal separators so localized and pasted values stay editable. */
+private val decimalInputRegex = Regex("^\\d*[.,]?\\d*$")
 
 /**
  * Quick-entry sheet for numeric habits, redesigned around a "goal ring"
@@ -159,7 +160,7 @@ fun NumericInputSheet(
         keyboardController?.show()
     }
 
-    val numericValue = valueText.toFloatOrNull() ?: 0f
+    val numericValue = parseFloat(valueText) ?: 0f
     val hasTarget = targetValue != null && targetValue > 0f
     // Same completion rule as GetHabitsWithStatusUseCase:
     //  with a target → reach it; without one → any value > 0 counts.
@@ -246,7 +247,7 @@ fun NumericInputSheet(
             ) {
                 HoldRepeatStepButton(
                     iconRes = DesignR.drawable.remove_24px,
-                    contentDescription = "Decrease",
+                    contentDescription = stringResource(R.string.access_decrease),
                     containerColor = habitColor.copy(alpha = 0.18f),
                     contentColor = habitColor,
                     onStep = { stepBy(-1f) }
@@ -286,7 +287,7 @@ fun NumericInputSheet(
                                     textFieldValue = new
                                 }
                             },
-                            onConfirm = { onConfirm(valueText.toFloatOrNull()) },
+                            onConfirm = { onConfirm(parseFloat(valueText)) },
                             unit = unit,
                             targetValue = targetValue,
                             habitColor = habitColor,
@@ -308,7 +309,7 @@ fun NumericInputSheet(
                                 textFieldValue = new
                             }
                         },
-                        onConfirm = { onConfirm(valueText.toFloatOrNull()) },
+                        onConfirm = { onConfirm(parseFloat(valueText)) },
                         unit = unit,
                         targetValue = null,
                         habitColor = habitColor,
@@ -324,7 +325,7 @@ fun NumericInputSheet(
 
                 HoldRepeatStepButton(
                     iconRes = DesignR.drawable.add_24px,
-                    contentDescription = "Increase",
+                    contentDescription = stringResource(R.string.access_increase),
                     containerColor = habitColor,
                     contentColor = Color.White,
                     onStep = { stepBy(1f) }
@@ -375,8 +376,8 @@ fun NumericInputSheet(
                     Text(stringResource(R.string.add_habit_cancel_button))
                 }
                 Button(
-                    onClick = { onConfirm(valueText.toFloatOrNull()) },
-                    enabled = valueText.isNotBlank() && valueText.toFloatOrNull() != null,
+                    onClick = { onConfirm(parseFloat(valueText)) },
+                    enabled = valueText.isNotBlank() && parseFloat(valueText) != null,
                     shapes = ButtonDefaults.shapes(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = habitColor,

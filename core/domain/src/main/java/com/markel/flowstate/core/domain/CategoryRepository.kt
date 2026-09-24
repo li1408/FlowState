@@ -13,8 +13,8 @@ interface CategoryRepository {
 
     /**
      * Creates a new user category appended after the existing ones
-     * (position = max + 1). Rejects blank names and the reserved name
-     * "General" (case-insensitive). No-op otherwise.
+     * (position = max + 1). Rejects blank names and all shipped display names
+     * of the built-in General category (case-insensitive). No-op otherwise.
      * This is the single source of truth for category creation
      * */
     suspend fun createCategory(name: String): Long

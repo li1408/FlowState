@@ -96,7 +96,11 @@ fun ExpandableFabMenu(
 
                 Icon(
                     imageVector = if (progress < 0.5f) addIcon else closeIcon,
-                    contentDescription = if (expanded) "Close menu" else "Open menu",
+                    contentDescription = if (expanded) {
+                        stringResource(R.string.access_close_menu)
+                    } else {
+                        stringResource(R.string.access_open_menu)
+                    },
                     tint = iconTint,
                     modifier = Modifier.size(FloatingActionButtonDefaults.MediumIconSize)
                 )

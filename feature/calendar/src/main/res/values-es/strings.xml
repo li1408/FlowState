@@ -6,4 +6,7 @@
     <string name="yesterday">Ayer</string>
     <string name="toggle">Tarea marcada como no completada</string>
     <string name="undo">Deshacer</string>
+    <string name="add_task">Añadir tarea</string>
+    <string name="mark_as_incomplete">Marcar como no completada</string>
+    <string name="mark_as_complete">Marcar como completada</string>
 </resources>

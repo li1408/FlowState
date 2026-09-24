@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="good_morning">Good morning</string>
+    <string name="good_afternoon">Good afternoon</string>
     <string name="good_evening">Good evening</string>
     <string name="good_night">Good night</string>
     <string name="new_task_placeholder">New task...</string>
@@ -64,4 +65,26 @@
     <!-- Task editor: metadata chips row -->
     <string name="task_meta_add_date">Date</string>
     <string name="task_meta_add_reminder">Reminder</string>
+
+    <!-- Accessibility actions -->
+    <string name="access_back">Back</string>
+    <string name="access_change_background_color">Change background color</string>
+    <string name="access_delete_checklist">Delete checklist</string>
+    <string name="access_collapse">Collapse</string>
+    <string name="access_expand">Expand</string>
+    <string name="access_reorder_item">Reorder item</string>
+    <string name="access_delete_item">Delete item</string>
+    <string name="access_close_menu">Close menu</string>
+    <string name="access_open_menu">Open menu</string>
+    <string name="access_delete_idea">Delete idea</string>
+    <string name="access_cancel_edit">Cancel edit</string>
+    <string name="access_priority">Priority</string>
+    <string name="access_delete">Delete</string>
+    <string name="access_save">Save</string>
+    <string name="access_switch_to_clock">Switch to clock</string>
+    <string name="access_switch_to_keyboard">Switch to keyboard</string>
+    <string name="access_notification">Notification</string>
+    <string name="access_create_task">Create task</string>
+    <string name="access_close">Close</string>
+    <string name="access_more_options">More options</string>
 </resources>

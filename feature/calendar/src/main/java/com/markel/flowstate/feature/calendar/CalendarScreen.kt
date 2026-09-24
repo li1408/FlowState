@@ -10,11 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.markel.flowstate.core.designsystem.R
 import com.markel.flowstate.core.designsystem.components.AnimatedUndoFab
 import com.markel.flowstate.core.designsystem.ui.rememberFabVisibilityState
 import com.markel.flowstate.core.domain.Task
@@ -24,6 +24,7 @@ import com.markel.flowstate.feature.flow.tasks.components.TaskCreationSheetConte
 import com.markel.flowstate.feature.flow.tasks.util.HandleSystemBars
 import kotlinx.coroutines.delay
 import java.time.ZoneId
+import com.markel.flowstate.core.designsystem.R as DesignR
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -73,8 +74,8 @@ fun CalendarScreen(
                 )
             ) {
                 Icon(
-                    ImageVector.vectorResource(R.drawable.add_24px),
-                    contentDescription = "Add task",
+                    ImageVector.vectorResource(DesignR.drawable.add_24px),
+                    contentDescription = stringResource(R.string.add_task),
                     modifier = Modifier.size(FloatingActionButtonDefaults.MediumIconSize),
                 )
             }

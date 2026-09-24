@@ -1,5 +1,6 @@
 package com.markel.flowstate.feature.calendar.components.taskslist
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,8 +39,6 @@ import java.time.temporal.WeekFields
 
 private const val DAYS_AHEAD = 180
 private val DAY_COLUMN_WIDTH = 56.dp
-private val firstDayOfWeek: DayOfWeek
-    get() = WeekFields.of(Locale.getDefault()).firstDayOfWeek
 
 private data class WeekBlock(
     val weekKey: String,
@@ -60,12 +59,14 @@ fun DailyTasksSection(
     listState: LazyListState,
     onTaskToggle: (Task) -> Unit
 ) {
-    val weeks = remember(startDate, tasksByDate) {
-        buildWeekBlocks(startDate, tasksByDate)
+    val locale = LocalLocale.current.platformLocale
+    val firstDayOfWeek = remember(locale) { WeekFields.of(locale).firstDayOfWeek }
+    val weeks = remember(startDate, tasksByDate, locale, firstDayOfWeek) {
+        buildWeekBlocks(startDate, tasksByDate, locale, firstDayOfWeek)
     }
 
-    LaunchedEffect(startDate) {
-        val targetKey = weekKeyFor(startDate)
+    LaunchedEffect(startDate, firstDayOfWeek) {
+        val targetKey = weekKeyFor(startDate, firstDayOfWeek)
         val targetIndex = weeks.indexOfFirst { it.weekKey == targetKey }.takeIf { it >= 0 } ?: 0
         listState.animateScrollToItem(targetIndex)
     }
@@ -189,7 +190,9 @@ private fun DayRow(
 
 private fun buildWeekBlocks(
     startDate: LocalDate,
-    tasksByDate: Map<LocalDate, List<Task>>
+    tasksByDate: Map<LocalDate, List<Task>>,
+    locale: Locale,
+    firstDayOfWeek: DayOfWeek,
 ): List<WeekBlock> {
     val endDate = startDate.plusDays(DAYS_AHEAD.toLong())
     val blocks = mutableListOf<WeekBlock>()
@@ -210,8 +213,8 @@ private fun buildWeekBlocks(
         if (days.isNotEmpty()) {
             blocks.add(
                 WeekBlock(
-                    weekKey = weekKeyFor(weekStart),
-                    label = buildWeekLabel(weekStart, weekStart.plusDays(6)),
+                    weekKey = weekKeyFor(weekStart, firstDayOfWeek),
+                    label = buildWeekLabel(weekStart, weekStart.plusDays(6), locale),
                     days = days
                 )
             )
@@ -221,12 +224,13 @@ private fun buildWeekBlocks(
     return blocks
 }
 
-private fun buildWeekLabel(weekStart: LocalDate, weekEnd: LocalDate): String {
-    val fmt = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
-    val end = if (weekStart.month == weekEnd.month) weekEnd.dayOfMonth.toString()
-    else weekEnd.format(fmt)
-    return "${weekStart.format(fmt)} – $end"
+private fun buildWeekLabel(weekStart: LocalDate, weekEnd: LocalDate, locale: Locale): String {
+    val formatter = DateTimeFormatter.ofPattern(
+        DateFormat.getBestDateTimePattern(locale, "MMMd"),
+        locale
+    )
+    return "${weekStart.format(formatter)} – ${weekEnd.format(formatter)}"
 }
 
-private fun weekKeyFor(date: LocalDate): String =
+private fun weekKeyFor(date: LocalDate, firstDayOfWeek: DayOfWeek): String =
     date.with(TemporalAdjusters.previousOrSame(firstDayOfWeek)).toString()

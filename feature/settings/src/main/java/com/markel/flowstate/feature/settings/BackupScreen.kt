@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +60,7 @@ fun BackupScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = LocalResources.current
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     // Reset state when entering the screen
@@ -113,7 +115,9 @@ fun BackupScreen(
                     val timestamp = LocalDateTime.now()
                         .toString()
                         .replace(":", "")
-                    exportLauncher.launch("FlowState-Backup-$timestamp.json")
+                    exportLauncher.launch(
+                        resources.getString(R.string.backup_file_name, timestamp)
+                    )
                 }
             }
         }

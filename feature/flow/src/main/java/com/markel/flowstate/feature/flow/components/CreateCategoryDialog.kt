@@ -12,11 +12,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.markel.flowstate.core.domain.Category
 import com.markel.flowstate.feature.tasks.R
 
 /**
  * Inline dialog used by the FlowScreen "+ New category" tab.
- * Only rejects blank names.
+ * Rejects blank names and the localized name of the built-in General category.
  */
 @Composable
 fun CreateCategoryDialog(
@@ -24,7 +25,10 @@ fun CreateCategoryDialog(
     onConfirm: (String) -> Unit
 ) {
     var categoryName by remember { mutableStateOf("") }
-    val isValid = categoryName.isNotBlank()
+    val trimmedName = categoryName.trim()
+    val generalName = stringResource(R.string.category_general)
+    val isReservedName = Category.isReservedGeneralName(trimmedName, generalName)
+    val isValid = trimmedName.isNotBlank() && !isReservedName
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -35,12 +39,18 @@ fun CreateCategoryDialog(
                 onValueChange = { categoryName = it },
                 label = { Text(stringResource(R.string.categories_name_label)) },
                 singleLine = true,
+                isError = isReservedName,
+                supportingText = if (isReservedName) {
+                    { Text(stringResource(R.string.categories_name_reserved)) }
+                } else {
+                    null
+                },
                 modifier = Modifier.fillMaxWidth()
             )
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(categoryName) },
+                onClick = { onConfirm(trimmedName) },
                 enabled = isValid
             ) {
                 Text(stringResource(R.string.ok))

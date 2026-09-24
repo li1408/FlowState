@@ -60,7 +60,11 @@ fun HabitFabMenu(
 
                 Icon(
                     imageVector = ImageVector.vectorResource(DesignR.drawable.add_24px),
-                    contentDescription = if (expanded) "Close menu" else "Add habit",
+                    contentDescription = if (expanded) {
+                        stringResource(R.string.access_close_menu)
+                    } else {
+                        stringResource(R.string.access_add_habit)
+                    },
                     tint = lerp(
                         MaterialTheme.colorScheme.onPrimaryContainer,
                         MaterialTheme.colorScheme.onPrimary,

@@ -29,6 +29,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -77,7 +78,7 @@ fun CheckListItemRow(
             with(scope) {
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.drag_handle_24px),
-                    contentDescription = "Reorder item",
+                    contentDescription = stringResource(R.string.access_reorder_item),
                     tint = onCardColor.copy(alpha = 0.75f),
                     modifier = Modifier
                         .size(36.dp)
@@ -129,7 +130,7 @@ fun CheckListItemRow(
                 ) {
                     Icon(
                         ImageVector.vectorResource(R.drawable.close_24px),
-                        contentDescription = "Delete item",
+                        contentDescription = stringResource(R.string.access_delete_item),
                         tint = onCardColor.copy(alpha = 0.4f),
                         modifier = Modifier.size(24.dp)
                     )

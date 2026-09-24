@@ -139,7 +139,7 @@ fun TaskCreationSheetContent(
                 }) {
                     Icon(
                         imageVector = ImageVector.vectorResource(priority.flagIconRes()),
-                        contentDescription = "Priority",
+                        contentDescription = stringResource(R.string.access_priority),
                         tint = priority.asColor()
                     )
                 }
@@ -156,7 +156,7 @@ fun TaskCreationSheetContent(
             ) {
                 Icon(
                     imageVector = ImageVector.vectorResource(R.drawable.send),
-                    contentDescription = "Create task",
+                    contentDescription = stringResource(R.string.access_create_task),
                     modifier = Modifier.size(24.dp)
                 )
             }

@@ -1,5 +1,6 @@
 package com.markel.flowstate.feature.habits.details.components.numeric
 
+import android.text.format.DateFormat
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -116,7 +117,10 @@ fun NumericHeatmapCard(
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
     }
     val dayLabel = remember(locale) {
-        DateTimeFormatter.ofPattern("EEE d MMM", locale)
+        DateTimeFormatter.ofPattern(
+            DateFormat.getBestDateTimePattern(locale, "EEEMMMd"),
+            locale
+        )
     }
 
     BoxWithConstraints(modifier = modifier) {

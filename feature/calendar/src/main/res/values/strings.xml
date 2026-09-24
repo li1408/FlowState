@@ -6,4 +6,7 @@
     <string name="yesterday">Yesterday</string>
     <string name="toggle">Task marked as incomplete</string>
     <string name="undo">Undo</string>
+    <string name="add_task">Add task</string>
+    <string name="mark_as_incomplete">Mark as incomplete</string>
+    <string name="mark_as_complete">Mark as complete</string>
 </resources>

@@ -23,11 +23,13 @@
     <string name="habit_type_boolean">Simple</string>
     <string name="habit_type_numeric">Cuantificable</string>
     <string name="habit_unit_label">Unidad</string>
+    <string name="habit_unit_placeholder">km, h, kg…</string>
     <string name="habit_target_label">Objetivo</string>
     <string name="habit_target_optional">Opcional</string>
     <string name="habit_target_preview">Objetivo: %1$s %2$s al día</string>
     <string name="habit_target_error">El objetivo debe ser un número mayor a 0 o nulo</string>
     <string name="habit_step_label">Incremento</string>
+    <string name="habit_step_placeholder">1 / 0,5…</string>
     <string name="habit_step_explanation">Cantidad que se suma/resta con los botones +/-</string>
     <string name="habit_step_error">El incremento debe ser un número mayor a 0</string>
     <string name="habit_clean_amount">Limpiar valor</string>
@@ -83,6 +85,42 @@
     <string name="weekly_bars_4m">4 M</string>
     <string name="weekly_bars_8m">8 M</string>
     <string name="weekly_bars_1y">1 A</string>
+
+    <!-- Accesibilidad y rangos -->
+    <string name="access_close_menu">Cerrar menú</string>
+    <string name="access_add_habit">Añadir hábito</string>
+    <string name="access_edit_value">Editar valor</string>
+    <string name="access_decrease">Disminuir</string>
+    <string name="access_increase">Aumentar</string>
+    <string name="access_back">Atrás</string>
+    <string name="view_range_one_month">1 M</string>
+    <string name="view_range_three_months">3 M</string>
+    <string name="view_range_one_year">1 A</string>
+
+    <!-- Descripciones de iconos -->
+    <string name="habit_icon_none">Sin icono</string>
+    <string name="habit_icon_self_improvement">Meditación</string>
+    <string name="habit_icon_fitness_center">Entrenamiento de fuerza</string>
+    <string name="habit_icon_directions_run">Correr</string>
+    <string name="habit_icon_directions_bike">Ciclismo</string>
+    <string name="habit_icon_book">Lectura</string>
+    <string name="habit_icon_bedtime">Sueño</string>
+    <string name="habit_icon_shower">Ducha</string>
+    <string name="habit_icon_cleaning">Limpieza</string>
+    <string name="habit_icon_dentistry">Cuidado dental</string>
+    <string name="habit_icon_language">Aprendizaje de idiomas</string>
+    <string name="habit_icon_laundry">Lavandería</string>
+    <string name="habit_icon_nutrition">Nutrición</string>
+    <string name="habit_icon_recycling">Reciclaje</string>
+    <string name="habit_icon_shopping">Compras</string>
+    <string name="habit_icon_water">Hidratación</string>
+    <string name="habit_icon_assignment">Planificación</string>
+    <string name="habit_icon_pets">Cuidado de mascotas</string>
+    <string name="habit_icon_washoku">Comidas</string>
+    <string name="habit_icon_pool">Natación</string>
+    <string name="habit_icon_hiking">Senderismo</string>
+    <string name="habit_icon_pill">Medicación</string>
+    <string name="habit_icon_nature">Naturaleza</string>
     <string-array name="motivational_keywords">
         <item>Constancia.</item>
         <item>Hoy.</item>

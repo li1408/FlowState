@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="good_morning">早上好</string>
+    <string name="good_afternoon">下午好</string>
+    <string name="good_evening">晚上好</string>
+    <string name="good_night">夜深了</string>
+    <string name="new_task_placeholder">新建任务…</string>
+    <string name="description_placeholder">说明（可选）</string>
+    <string name="edit_task_placeholder">要完成什么？</string>
+    <string name="edit_task_desc_placeholder">添加详情</string>
+    <string name="subtasks">子任务</string>
+    <string name="idea">灵感</string>
+    <string name="task">任务</string>
+    <string name="clear">全部处理完了</string>
+    <string name="subtask_placeholder">子任务…</string>
+    <string name="add_subtask_placeholder">添加子任务…</string>
+    <string name="tasks">任务</string>
+    <string name="habits">习惯</string>
+    <string name="mood">心情</string>
+    <string name="settings">设置</string>
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="tomorrow">明天</string>
+    <string name="yesterday">昨天</string>
+    <string name="today">今天</string>
+    <string name="clear_cal">清除</string>
+    <string name="calendar">日历</string>
+    <string name="add_subtask">添加子任务</string>
+    <string name="title">标题</string>
+    <string name="idea_content">开始记录…</string>
+    <string name="backg_color">背景颜色</string>
+    <string name="mark_pending">标记为未完成</string>
+    <string name="mark_completed">标记为已完成</string>
+    <string name="delete_task">删除任务</string>
+    <string name="flow">事项</string>
+    <string name="checklist">清单</string>
+    <string name="more">更多</string>
+    <string name="list_element">清单项目…</string>
+    <plurals name="completed_items">
+        <item quantity="one">已完成 %d 项</item>
+        <item quantity="other">已完成 %d 项</item>
+    </plurals>
+    <string name="tasks_m">任务</string>
+    <string name="checklists_m">清单</string>
+    <string name="ideas_notes_m">灵感与笔记</string>
+    <string name="next">下一步</string>
+    <string name="reminder_time_title">设置时间</string>
+    <string name="permission_title">精确时间提醒已关闭</string>
+    <string name="permission_body">为确保按时提醒，请允许 FlowState 设置精确闹钟。</string>
+    <string name="permission_settings">前往设置</string>
+    <string name="reminder_past_time_error">请选择未来时间</string>
+
+    <string name="categories_create">新建分类</string>
+    <string name="categories_trail">+ 新建分类</string>
+    <string name="categories_name_label">分类名称</string>
+    <string name="categories_name_reserved">“常规”是保留名称</string>
+    <string name="categories_reorder_title">调整分类顺序</string>
+    <string name="category_general">常规</string>
+    <string name="category_selector_title">移至分类</string>
+    <string name="task_meta_add_date">日期</string>
+    <string name="task_meta_add_reminder">提醒</string>
+
+    <!-- 无障碍操作 -->
+    <string name="access_back">返回</string>
+    <string name="access_change_background_color">更改背景颜色</string>
+    <string name="access_delete_checklist">删除清单</string>
+    <string name="access_collapse">收起</string>
+    <string name="access_expand">展开</string>
+    <string name="access_reorder_item">调整项目顺序</string>
+    <string name="access_delete_item">删除项目</string>
+    <string name="access_close_menu">关闭菜单</string>
+    <string name="access_open_menu">打开菜单</string>
+    <string name="access_delete_idea">删除灵感</string>
+    <string name="access_cancel_edit">取消编辑</string>
+    <string name="access_priority">优先级</string>
+    <string name="access_delete">删除</string>
+    <string name="access_save">保存</string>
+    <string name="access_switch_to_clock">切换到时钟</string>
+    <string name="access_switch_to_keyboard">切换到键盘</string>
+    <string name="access_notification">通知</string>
+    <string name="access_create_task">创建任务</string>
+    <string name="access_close">关闭</string>
+    <string name="access_more_options">更多选项</string>
+</resources>

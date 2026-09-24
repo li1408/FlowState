@@ -1,12 +1,12 @@
 package com.markel.flowstate.feature.habits.details
 
+import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import java.time.LocalDate
-import java.time.format.TextStyle
+import java.time.format.DateTimeFormatter
 import com.markel.flowstate.core.domain.HabitStatsCalculator
 import com.markel.flowstate.feature.habits.R
-import java.time.Month
 import java.util.Locale
 
 /**
@@ -37,27 +37,30 @@ fun HabitDetailUiState.pctLabel() = when (viewMode) {
     CalendarViewMode.ONE_YEAR -> stringResource(R.string.habit_detail_pct_year)
 }
 
+@Composable
 fun CalendarViewMode.label() = when (this) {
-    CalendarViewMode.ONE_MONTH -> "1M"
-    CalendarViewMode.THREE_MONTHS -> "3M"
-    CalendarViewMode.ONE_YEAR -> "1A"
+    CalendarViewMode.ONE_MONTH -> stringResource(R.string.view_range_one_month)
+    CalendarViewMode.THREE_MONTHS -> stringResource(R.string.view_range_three_months)
+    CalendarViewMode.ONE_YEAR -> stringResource(R.string.view_range_one_year)
 }
 
 fun HabitDetailUiState.navigationLabel(locale: Locale): String {
-    val monthNames = Month.values()
+    val month = LocalDate.of(displayYear, displayMonth + 1, 1)
     return when (viewMode) {
-        CalendarViewMode.ONE_MONTH ->
-            "${monthNames[displayMonth].getDisplayName(TextStyle.FULL, locale)
-                .replaceFirstChar { it.uppercase() }} $displayYear"
+        CalendarViewMode.ONE_MONTH -> month.format(
+            localizedFormatter(locale, "yMMMM")
+        )
         CalendarViewMode.THREE_MONTHS -> {
-            var mStart = displayMonth - 2
-            var yStart = displayYear
-            if (mStart < 0) { mStart += 12; yStart-- }
-            "${monthNames[mStart].getDisplayName(TextStyle.SHORT, locale)
-                .replaceFirstChar { it.uppercase() }} – ${monthNames[displayMonth]
-                .getDisplayName(TextStyle.SHORT, locale)
-                .replaceFirstChar { it.uppercase() }} $displayYear"
+            val startMonth = month.minusMonths(2)
+            val formatter = localizedFormatter(locale, "yMMM")
+            "${startMonth.format(formatter)} – ${month.format(formatter)}"
         }
-        CalendarViewMode.ONE_YEAR -> "$displayYear"
+        CalendarViewMode.ONE_YEAR -> month.format(localizedFormatter(locale, "y"))
     }
 }
+
+private fun localizedFormatter(locale: Locale, skeleton: String): DateTimeFormatter =
+    DateTimeFormatter.ofPattern(
+        DateFormat.getBestDateTimePattern(locale, skeleton),
+        locale
+    )

@@ -1,5 +1,6 @@
 package com.markel.flowstate.feature.flow.components
 
+import android.text.format.DateFormat
 import android.content.res.Configuration
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,14 +40,22 @@ import androidx.compose.ui.text.font.FontStyle
 fun DynamicHeader(isMinimized: Boolean)
 {
     val greeting = when (LocalTime.now().hour) {
-        in 5..12 -> R.string.good_morning
-        in 13..20 -> R.string.good_evening
+        in 5..11 -> R.string.good_morning
+        in 12..17 -> R.string.good_afternoon
+        in 18..22 -> R.string.good_evening
         else -> R.string.good_night
     }
 
-    val dateText = DateTimeFormatter.ofPattern("EEEE, d MMM", LocalLocale.current.platformLocale)
+    val locale = LocalLocale.current.platformLocale
+    val dateFormatter = remember(locale) {
+        DateTimeFormatter.ofPattern(
+            DateFormat.getBestDateTimePattern(locale, "EEEEMMMd"),
+            locale
+        )
+    }
+    val dateText = dateFormatter
         .format(LocalDate.now())
-        .uppercase()
+        .uppercase(locale)
 
     val headerHeight by animateDpAsState(
         targetValue = if (isMinimized) 35.dp else 65.dp,
