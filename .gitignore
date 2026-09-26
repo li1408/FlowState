@@ -5,6 +5,9 @@
 .kotlin/
 .DS_Store
 /build
+**/build/
+**/build-codex/
+.tmp/
 /captures
 .externalNativeBuild
 .cxx

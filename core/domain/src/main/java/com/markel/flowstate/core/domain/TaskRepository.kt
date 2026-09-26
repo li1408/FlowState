@@ -45,4 +45,21 @@ interface TaskRepository {
      * Clears the reminderTime of a subtask, marking its reminder as consumed.
      */
     suspend fun clearSubTaskReminder(subTaskId: String)
+
+    /**
+     * Atomically completes a task and saves its optional check-in record.
+     * Repeating the call never overwrites the first successful record.
+     */
+    suspend fun completeTask(
+        taskId: Int,
+        completedAt: Long,
+        note: String?,
+        photoId: String?,
+    ): CompletionCommitStatus
+
+    /**
+     * Reopens a task while retaining its prior check-in as recoverable history.
+     * The next successful completion replaces it atomically.
+     */
+    suspend fun reopenTask(taskId: Int): ReopenTaskResult
 }

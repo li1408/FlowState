@@ -9,11 +9,44 @@ interface HabitDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHabit(habit: HabitEntity): Long
 
+    @Query("DELETE FROM habits")
+    suspend fun deleteAllHabits()
+
+    /** Replaces only the isolated benchmark package's habits in one transaction. */
+    @Transaction
+    suspend fun replaceHabitsForBenchmark(habits: List<HabitEntity>) {
+        deleteAllHabits()
+        habits.forEach { insertHabit(it) }
+    }
+
+    @Query("SELECT COALESCE(MAX(position), -1) + 1 FROM habits")
+    suspend fun nextHabitPosition(): Int
+
+    @Transaction
+    suspend fun insertHabitAtEnd(habit: HabitEntity): Long =
+        insertHabit(habit.copy(position = nextHabitPosition()))
+
     @Delete
     suspend fun deleteHabit(habit: HabitEntity)
 
+    @Query("UPDATE habits SET position = position - 1 WHERE position > :deletedPosition")
+    suspend fun closePositionGap(deletedPosition: Int)
+
+    @Query("SELECT position FROM habits WHERE id = :id")
+    suspend fun getHabitPosition(id: Int): Int?
+
+    @Transaction
+    suspend fun deleteHabitAndCloseGap(habit: HabitEntity) {
+        val currentPosition = getHabitPosition(habit.id) ?: return
+        deleteHabit(habit)
+        closePositionGap(currentPosition)
+    }
+
     @Update
     suspend fun updateHabit(habit: HabitEntity)
+
+    @Query("SELECT * FROM habits ORDER BY position ASC, id ASC")
+    fun getHabits(): Flow<List<HabitEntity>>
 
     @Transaction
     @Query("SELECT * FROM habits")
@@ -54,6 +87,11 @@ interface HabitDao {
     @Query("UPDATE habits SET position = :position WHERE id = :id")
     suspend fun updatePosition(id: Int, position: Int)
 
+    @Transaction
+    suspend fun updatePositions(positions: List<Pair<Int, Int>>) {
+        positions.forEach { (id, position) -> updatePosition(id, position) }
+    }
+
     @Query("SELECT * FROM habit_numeric_entries WHERE habitId = :habitId ORDER BY epochDay DESC")
     fun getNumericEntries(habitId: Int): Flow<List<HabitNumericEntryEntity>>
 
@@ -62,6 +100,21 @@ interface HabitDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertNumericEntry(entry: HabitNumericEntryEntity)
+
+    /**
+     * Applies a delta in one SQLite statement so rapid taps cannot overwrite
+     * one another. Values are clamped to zero, matching the previous decrement
+     * behavior while retaining a zero-valued row.
+     */
+    @Query(
+        """
+        INSERT INTO habit_numeric_entries(habitId, epochDay, value)
+        VALUES (:habitId, :epochDay, MAX(0, :delta))
+        ON CONFLICT(habitId, epochDay) DO UPDATE
+        SET value = MAX(0, value + :delta)
+        """
+    )
+    suspend fun adjustNumericEntry(habitId: Int, epochDay: Long, delta: Float)
 
     @Query("DELETE FROM habit_numeric_entries WHERE habitId = :habitId AND epochDay = :epochDay")
     suspend fun deleteNumericEntry(habitId: Int, epochDay: Long)

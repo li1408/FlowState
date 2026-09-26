@@ -35,6 +35,8 @@ import java.time.format.TextStyle
 import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.platform.testTag
+import com.markel.flowstate.core.designsystem.ui.LocalBottomNavigationInset
 import java.time.temporal.WeekFields
 
 private const val DAYS_AHEAD = 180
@@ -59,6 +61,7 @@ fun DailyTasksSection(
     listState: LazyListState,
     onTaskToggle: (Task) -> Unit
 ) {
+    val bottomNavigationInset = LocalBottomNavigationInset.current
     val locale = LocalLocale.current.platformLocale
     val firstDayOfWeek = remember(locale) { WeekFields.of(locale).firstDayOfWeek }
     val weeks = remember(startDate, tasksByDate, locale, firstDayOfWeek) {
@@ -73,7 +76,11 @@ fun DailyTasksSection(
 
     LazyColumn(
         state = listState,
-        contentPadding = PaddingValues(bottom = 60.dp, top = 8.dp)
+        modifier = Modifier.testTag("benchmark_calendar_list"),
+        contentPadding = PaddingValues(
+            top = 8.dp,
+            bottom = 60.dp + bottomNavigationInset,
+        )
     ) {
         weeks.forEach { week ->
             item(key = "week_${week.weekKey}") {

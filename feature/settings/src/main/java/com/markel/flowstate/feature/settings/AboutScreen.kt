@@ -60,8 +60,8 @@ import com.markel.flowstate.feature.settings.components.SettingsGroupShapes
 import com.markel.flowstate.feature.settings.components.settingsItemShape
 import androidx.core.net.toUri
 
-private const val REPO_URL = "https://github.com/Markel15/FlowState"
-private const val DEVELOPER_GITHUB_URL = "https://github.com/Markel15"
+private const val REPO_URL = "https://github.com/li1408/FlowState"
+private const val DEVELOPER_GITHUB_URL = "https://github.com/li1408"
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -358,11 +358,32 @@ private fun LicenseBottomSheet(
                     .weight(weight = 1f, fill = false),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                item {
+                    Text(
+                        text = stringResource(R.string.android_liquid_glass_attribution),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 item{
                     Text(
                         text = apacheLicenseText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                item {
+                    Text(
+                        text = stringResource(R.string.konfetti_attribution),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                item {
+                    Text(
+                        text = konfettiIscLicenseText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -376,6 +397,24 @@ private fun LicenseBottomSheet(
 private fun android.content.Context.openUrl(url: String) {
     startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
 }
+
+private val konfettiIscLicenseText = """
+ISC License
+
+Copyright (c) 2017 Dion Segijn
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+""".trimIndent()
 
 
 /**

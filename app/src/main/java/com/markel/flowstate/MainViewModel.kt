@@ -2,6 +2,7 @@ package com.markel.flowstate
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.markel.flowstate.core.designsystem.feedback.CompletionCelebrationHostState
 import com.markel.flowstate.core.data.MainTab
 import com.markel.flowstate.core.data.ThemeMode
 import com.markel.flowstate.core.data.UserPreferencesRepository
@@ -19,6 +20,9 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
+
+    /** Retained across configuration changes, but intentionally not process death. */
+    val completionCelebrationHostState = CompletionCelebrationHostState()
 
     /** Tab to use as the second element of the initial back stack. */
     private val _initialTab = MutableStateFlow(MainTab.TASKS)

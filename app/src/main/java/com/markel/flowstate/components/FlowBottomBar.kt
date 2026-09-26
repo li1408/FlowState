@@ -1,110 +1,130 @@
 package com.markel.flowstate.components
 
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.background
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationItemIconPosition
-import androidx.compose.material3.ShortNavigationBar
-import androidx.compose.material3.ShortNavigationBarArrangement
-import androidx.compose.material3.ShortNavigationBarDefaults
-import androidx.compose.material3.ShortNavigationBarItem
-import androidx.compose.material3.ShortNavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation3.runtime.NavBackStack
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.NavKey
+import com.kyant.backdrop.Backdrop
+import com.markel.flowstate.components.liquidglass.LiquidBottomTab
+import com.markel.flowstate.components.liquidglass.LiquidBottomBarMotion
+import com.markel.flowstate.components.liquidglass.LiquidBottomTabs
 import com.markel.flowstate.navigation.BottomNavScreen
 import com.markel.flowstate.navigation.TabKey
 
 /**
- * Bottom navigation bar.
+ * Floating liquid-glass navigation adapted from AndroidLiquidGlass' catalog.
  *
- * In the nav3 architecture this composable lives INSIDE the Scene Decorator
- * (see [com.markel.flowstate.navigation.FlowStateSceneDecoratorStrategy]). The
- * decorator wraps non-fullscreen scenes with this bar; fullscreen scenes pass
- * through unwrapped and cover the bar visually.
- *
- * The bar receives the current [topLevelRoute] directly from
- * [com.markel.flowstate.navigation.NavigationState] and routes every tap
- * through [onNavigate], which calls [com.markel.flowstate.navigation.FlowStateNavigator.navigate].
- * The navigator decides whether to switch tabs or push a detail based on the
- * key type.
+ * Navigation remains driven by the app's stable [NavKey] values, while the
+ * glass component owns only transient press, drag and settle animation state.
  */
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FlowBottomBar(
     topLevelRoute: NavKey,
-    onNavigate: (NavKey) -> Unit,
+    onNavigate: (key: NavKey, visualDirection: Int) -> Unit,
     isLandscape: Boolean,
+    backdrop: Backdrop,
+    modifier: Modifier = Modifier,
     items: List<BottomNavScreen> = emptyList(),
 ) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .background(MaterialTheme.colorScheme.surface)
-    ) {
-        HorizontalDivider(
-            thickness = 0.3.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
+    if (items.isEmpty()) return
 
-        ShortNavigationBar(
-            arrangement = if (isLandscape) {
-                ShortNavigationBarArrangement.Centered
-            } else {
-                ShortNavigationBarArrangement.EqualWeight
-            },
-            containerColor = Color.Transparent,
-            windowInsets = ShortNavigationBarDefaults.windowInsets,
-        ) {
-            items.forEach { screen ->
-                val selected = topLevelRoute == screen.key
-                val label = stringResource(screen.labelRes)
-                ShortNavigationBarItem(
-                    selected = selected,
-                    onClick = {
-                        if (!selected) onNavigate(screen.key)
-                    },
-                    icon = {
-                        val iconDrawable = if (selected) screen.iconSelectedRes else screen.iconRes
-                        Icon(
-                            imageVector = ImageVector.vectorResource(iconDrawable),
-                            contentDescription = label
-                        )
-                    },
-                    label = { Text(label) },
-                    // Portrait: icon above label (Top)
-                    // Landscape: icon beside label (Start)
-                    iconPosition = if (isLandscape) {
-                        NavigationItemIconPosition.Start
-                    } else {
-                        NavigationItemIconPosition.Top
-                    },
-                    colors = ShortNavigationBarItemDefaults.colors(
-                        selectedIndicatorColor = Color.Transparent,
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            .copy(alpha = 0.7f),
-                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            .copy(alpha = 0.9f)
+    val selectedIndex = LiquidBottomBarMotion.selectedIndex(
+        items = items.map { it.key },
+        selected = topLevelRoute,
+    )
+        ?: 0
+    val accentColor = Color(0xFF12A66A)
+    val baseContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.88f)
+    val hapticFeedback = LocalHapticFeedback.current
+    val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
+    val itemKeys = remember(items) { items.map { it.key } }
+    var committedIndex by remember(itemKeys) { mutableIntStateOf(selectedIndex) }
+    LaunchedEffect(selectedIndex) { committedIndex = selectedIndex }
+
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        LiquidBottomTabs(
+            selectedTabIndex = selectedIndex,
+            onTabSelected = { index ->
+                val destination = items.getOrNull(index) ?: return@LiquidBottomTabs
+                if (index != committedIndex) {
+                    val visualDirection = LiquidBottomBarMotion.transitionDirection(
+                        fromIndex = committedIndex,
+                        toIndex = index,
+                        isLtr = isLtr,
                     )
-                )
+                    committedIndex = index
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onNavigate(destination.key, visualDirection)
+                }
+            },
+            backdrop = backdrop,
+            tabsCount = items.size,
+            accentColor = accentColor,
+            contentColor = baseContentColor,
+            modifier = Modifier
+                .fillMaxWidth(if (isLandscape) 0.72f else 1f)
+                .widthIn(max = 560.dp),
+        ) { visualSelectedIndex, committedSelectedIndex ->
+            items.forEachIndexed { index, screen ->
+                val visuallySelected = index == visualSelectedIndex
+                val semanticallySelected = index == committedSelectedIndex
+                val label = stringResource(screen.labelRes)
+                val iconDrawable = if (visuallySelected) screen.iconSelectedRes else screen.iconRes
+
+                LiquidBottomTab(
+                    index = index,
+                    selected = semanticallySelected,
+                    modifier = Modifier.testTag(screen.benchmarkTag()),
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(iconDrawable),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Text(
+                        text = label,
+                        fontSize = 11.sp,
+                        lineHeight = 12.sp,
+                        fontWeight = if (visuallySelected) FontWeight.SemiBold else FontWeight.Medium,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }
+}
+
+private fun BottomNavScreen.benchmarkTag(): String = when (key) {
+    TabKey.Tasks -> "benchmark_bottom_tab_flow"
+    TabKey.Calendar -> "benchmark_bottom_tab_calendar"
+    TabKey.Habits -> "benchmark_bottom_tab_habits"
+    TabKey.Mood -> "benchmark_bottom_tab_mood"
+    TabKey.Settings -> "benchmark_bottom_tab_settings"
 }

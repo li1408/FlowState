@@ -46,7 +46,7 @@
     <string name="next">Siguiente</string>
     <string name="reminder_time_title">Fijar hora</string>
     <string name="permission_title">Los recordatorios precisos están desactivados</string>
-    <string name="permission_body">Para ser notificado en el momento exacto, proporciona los permisos necesarios a FlowState para las alarmas exactas.</string>
+    <string name="permission_body">Para ser notificado en el momento exacto, proporciona los permisos necesarios a 30天计划 para las alarmas exactas.</string>
     <string name="permission_settings">Ir a ajustes</string>
     <string name="reminder_past_time_error">Selecciona una hora futura</string>
 
@@ -87,4 +87,31 @@
     <string name="access_create_task">Crear tarea</string>
     <string name="access_close">Cerrar</string>
     <string name="access_more_options">Más opciones</string>
+    <string name="completion_sheet_title">Completar esta tarea</string>
+    <string name="completion_sheet_subtitle">Guarda el momento de «%1$s»</string>
+    <string name="completion_note_label">Escribe sobre este momento (opcional)</string>
+    <string name="completion_take_photo">Hacer foto</string>
+    <string name="completion_choose_photo">Elegir de la galería</string>
+    <string name="completion_replace_photo">Cambiar foto</string>
+    <string name="completion_remove_photo">Eliminar foto</string>
+    <string name="completion_photo_preview">Vista previa de la foto de finalización</string>
+    <string name="completion_save">Guardar registro y completar</string>
+    <string name="completion_skip">Completar sin registro</string>
+    <string name="completion_processing_photo">Procesando foto…</string>
+    <string name="completion_saving">Guardando…</string>
+    <string name="completion_error_photo">No se pudo procesar la foto. Prueba con otra.</string>
+    <string name="completion_error_save">No se pudo guardar. Tu texto y foto siguen aquí.</string>
+    <string name="completion_error_missing_task">Esta tarea ya no está disponible.</string>
+    <string name="completion_error_already_completed">Esta tarea se completó en otro lugar. Tu texto y foto siguen aquí y no se sobrescribieron.</string>
+    <string name="completion_progress">Completadas %1$d/%2$d</string>
+    <string name="completion_remaining">Quedan %1$d</string>
+    <string name="completion_completed_section">Completadas (%1$d)</string>
+    <string name="completion_details_title">Registro de finalización</string>
+    <string name="completion_no_note">Sin nota escrita</string>
+    <string name="completion_mark_pending">Marcar como pendiente</string>
+    <string name="completion_close">Cerrar</string>
+    <string name="access_mark_task_complete">Marcar tarea como completada</string>
+    <string name="access_mark_task_pending">Marcar tarea como pendiente</string>
+    <string name="access_task_state_completed">Completada</string>
+    <string name="access_task_state_pending">Pendiente</string>
 </resources>

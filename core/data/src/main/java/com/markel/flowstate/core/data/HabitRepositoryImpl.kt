@@ -4,7 +4,6 @@ import com.markel.flowstate.core.data.local.HabitDao
 import com.markel.flowstate.core.data.local.HabitEntity
 import com.markel.flowstate.core.data.local.HabitEntryEntity
 import com.markel.flowstate.core.data.local.HabitNumericEntryEntity
-import com.markel.flowstate.core.data.local.HabitWithEntries
 import com.markel.flowstate.core.domain.Habit
 import com.markel.flowstate.core.domain.HabitEntryFlat
 import com.markel.flowstate.core.domain.HabitNumericEntry
@@ -20,7 +19,7 @@ class HabitRepositoryImpl @Inject constructor(
 ) : HabitRepository {
 
     override fun getHabits(): Flow<List<Habit>> =
-        dao.getHabitsWithEntries().map { list -> list.map { it.habit.toDomain() } }
+        dao.getHabits().map { list -> list.map { it.toDomain() } }
 
     override fun getEntriesForHabit(habitId: Int): Flow<List<LocalDate>> =
         dao.getEntriesForHabit(habitId).map { entries ->
@@ -34,16 +33,17 @@ class HabitRepositoryImpl @Inject constructor(
         dao.getHabitFlow(id).map { it?.toDomain() }
 
     override suspend fun insertHabit(habit: Habit) =
-        dao.insertHabit(habit.toEntity()).let { Unit }
+        dao.insertHabitAtEnd(habit.toEntity()).let { Unit }
 
     override suspend fun updateHabit(habit: Habit) =
         dao.updateHabit(habit.toEntity())
 
     override suspend fun deleteHabit(habit: Habit) =
-        dao.deleteHabit(habit.toEntity())
+        dao.deleteHabitAndCloseGap(habit.toEntity())
 
     override suspend fun toggleEntry(habitId: Int, date: LocalDate) {
         val habit = dao.getHabitById(habitId) ?: return
+        if (date.isBefore(habit.creationDate())) return
         if (date.dayOfWeek !in habit.scheduledDays) return
         dao.toggleEntry(habitId, date.toEpochDay())
     }
@@ -65,6 +65,7 @@ class HabitRepositoryImpl @Inject constructor(
 
     override suspend fun logNumericEntry(habitId: Int, date: LocalDate, value: Float) {
         val habit = dao.getHabitById(habitId) ?: return
+        if (date.isBefore(habit.creationDate())) return
         if (date.dayOfWeek !in habit.scheduledDays) return
         dao.upsertNumericEntry(
             HabitNumericEntryEntity(
@@ -75,11 +76,18 @@ class HabitRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun adjustNumericEntry(habitId: Int, date: LocalDate, delta: Float) {
+        val habit = dao.getHabitById(habitId) ?: return
+        if (date.isBefore(habit.creationDate())) return
+        if (date.dayOfWeek !in habit.scheduledDays) return
+        dao.adjustNumericEntry(habitId, date.toEpochDay(), delta)
+    }
+
     override suspend fun deleteNumericEntry(habitId: Int, date: LocalDate) =
         dao.deleteNumericEntry(habitId, date.toEpochDay())
 
     override suspend fun updatePositions(positions: List<Pair<Int, Int>>) {
-        positions.forEach { (id, position) -> dao.updatePosition(id, position) }
+        dao.updatePositions(positions)
     }
 
     // --- Mappers ---
@@ -97,6 +105,9 @@ class HabitRepositoryImpl @Inject constructor(
         position = position,
         scheduledDays = scheduledDays
     )
+
+    private fun HabitEntity.creationDate(): LocalDate =
+        LocalDate.ofEpochDay(createdAt / MILLIS_PER_DAY)
 
     private fun Habit.toEntity() = HabitEntity(
         id = id,
@@ -117,4 +128,8 @@ class HabitRepositoryImpl @Inject constructor(
         date = LocalDate.ofEpochDay(epochDay),
         value = value
     )
+
+    private companion object {
+        const val MILLIS_PER_DAY = 86_400_000L
+    }
 }

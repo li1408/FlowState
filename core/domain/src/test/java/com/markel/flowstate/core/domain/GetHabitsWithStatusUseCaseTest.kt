@@ -3,9 +3,16 @@ package com.markel.flowstate.core.domain
 import com.markel.flowstate.core.domain.usecase.habits.GetHabitsWithStatusUseCase
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -35,6 +42,7 @@ class GetHabitsWithStatusUseCaseTest {
                 HabitEntryFlat(habit.id, friday.toEpochDay())
             )
         )
+        every { repository.getAllNumericEntries() } returns flowOf(emptyList())
 
         val result = useCase(friday).first().single()
 
@@ -47,7 +55,7 @@ class GetHabitsWithStatusUseCaseTest {
         val habit = habit(type = HabitType.NUMERIC, targetValue = 10f)
         every { repository.getHabits() } returns flowOf(listOf(habit))
         every { repository.getAllEntries() } returns flowOf(emptyList())
-        every { repository.getNumericEntries(habit.id) } returns flowOf(
+        every { repository.getAllNumericEntries() } returns flowOf(
             listOf(
                 numericEntry(monday, 12f),
                 numericEntry(monday.plusDays(2), 10f),
@@ -66,7 +74,7 @@ class GetHabitsWithStatusUseCaseTest {
         val habit = habit(type = HabitType.NUMERIC, targetValue = 10f)
         every { repository.getHabits() } returns flowOf(listOf(habit))
         every { repository.getAllEntries() } returns flowOf(emptyList())
-        every { repository.getNumericEntries(habit.id) } returns flowOf(
+        every { repository.getAllNumericEntries() } returns flowOf(
             listOf(
                 numericEntry(monday, 12f),
                 numericEntry(monday.plusDays(2), 5f),
@@ -77,6 +85,34 @@ class GetHabitsWithStatusUseCaseTest {
         val result = useCase(friday).first().single()
 
         assertEquals(1, result.streak)
+    }
+
+    @Test
+    fun dashboard_recomputesStatusWhenLocalDateChanges() = runTest {
+        val dailyHabit = habit(type = HabitType.BOOLEAN).copy(
+            scheduledDays = DayOfWeek.entries.toSet(),
+        )
+        every { repository.getHabits() } returns flowOf(listOf(dailyHabit))
+        every { repository.getAllEntries() } returns flowOf(
+            listOf(HabitEntryFlat(dailyHabit.id, monday.toEpochDay()))
+        )
+        every { repository.getAllNumericEntries() } returns flowOf(emptyList())
+        val dates = MutableStateFlow(monday)
+        val firstEmission = CompletableDeferred<Unit>()
+
+        val result = async {
+            useCase.observeDashboardOnDates(dates)
+                .onEach { firstEmission.complete(Unit) }
+                .take(2)
+                .toList()
+        }
+        firstEmission.await()
+        dates.value = monday.plusDays(1)
+
+        val emissions = result.await()
+        assertTrue(emissions[0].habits.single().isCompletedToday)
+        assertFalse(emissions[1].habits.single().isCompletedToday)
+        assertEquals(monday.plusDays(1), emissions[1].date)
     }
 
     private fun habit(type: HabitType, targetValue: Float? = null) = Habit(

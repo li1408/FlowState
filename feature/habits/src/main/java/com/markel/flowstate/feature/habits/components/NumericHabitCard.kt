@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,6 +35,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.times
+import com.markel.flowstate.core.domain.Habit
 import com.markel.flowstate.core.domain.HabitNumericEntry
 import com.markel.flowstate.core.domain.isScheduledFor
 import com.markel.flowstate.feature.habits.util.formatFloat
@@ -44,8 +46,8 @@ import kotlinx.coroutines.launch
 fun NumericHabitCard(
     habitWithStatus: HabitWithStatus,
     allEntries: List<HabitNumericEntry>,
-    onIncrementToday: () -> Unit,
-    onDecrementToday: () -> Unit,
+    onIncrement: (LocalDate) -> Unit,
+    onDecrement: (LocalDate) -> Unit,
     onSetValue: (LocalDate, Float?) -> Unit,
     onDelete: () -> Unit,
     onEdit: (
@@ -64,7 +66,7 @@ fun NumericHabitCard(
     val today = LocalDate.now()
     val scope = rememberCoroutineScope()
     var weekOffset by remember { mutableIntStateOf(0) }  // O if actual week, -1 if is last week
-    val weekStart = remember(weekOffset) {
+    val weekStart = remember(weekOffset, today) {
         today.with(DayOfWeek.MONDAY).plusWeeks(weekOffset.toLong())
     }
 
@@ -86,7 +88,7 @@ fun NumericHabitCard(
     }
 
     // selectedDate resets to today (if is this week) or monday when changing week view
-    var selectedDate by remember(weekOffset) {
+    var selectedDate by remember(weekOffset, today) {
         mutableStateOf(if (weekOffset == 0) today else weekStart)
     }
 
@@ -94,7 +96,11 @@ fun NumericHabitCard(
         ChronoUnit.DAYS.between(weekStart, selectedDate).toInt().coerceIn(0, 6)
     }
     val isScheduledToday = habit.isScheduledFor(today)
-    val selectedDateIsScheduled = habit.isScheduledFor(selectedDate)
+    val selectedDateIsEditable = canEditNumericHabitOnDate(
+        habit = habit,
+        date = selectedDate,
+        today = today,
+    )
 
     val selectedValue = if (selectedDate.isAfter(today)) {
         null
@@ -164,7 +170,7 @@ fun NumericHabitCard(
     }
 
     // Input sheet (goal-ring + hold-to-repeat steppers)
-    if (showInputDialog && selectedDateIsScheduled) {
+    if (showInputDialog && selectedDateIsEditable) {
         val currentValueForDialog = currentWeekValues.getOrNull(selectedDayIndex)
         NumericInputSheet(
             habitName = habit.name,
@@ -308,18 +314,19 @@ fun NumericHabitCard(
                 currentWeekValues.forEachIndexed { index, value ->
                     val date = weekStart.plusDays(index.toLong())
                     val isFuture = date.isAfter(today)
+                    val isBeforeCreation = date.isBefore(habit.createdAt)
                     val isToday = date == today
                     val isScheduled = habit.isScheduledFor(date)
                     val isSelected = date == selectedDate
 
                     NumericWeekBar(
-                        value = if (isFuture) null else value,
+                        value = if (isFuture || isBeforeCreation) null else value,
                         targetValue = targetValue,
                         scaleReference = scaleReference,
                         color = habitColor,
                         date = date,
                         isToday = isToday,
-                        isFuture = isFuture,
+                        isFuture = isFuture || isBeforeCreation,
                         isScheduled = isScheduled,
                         isSelected = isSelected,
                         onClick = { selectedDate = date },
@@ -338,7 +345,7 @@ fun NumericHabitCard(
             ) {
                 Surface(
                     onClick = { showInputDialog = true },
-                    enabled = selectedDateIsScheduled,
+                    enabled = selectedDateIsEditable,
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHighest,
                     modifier = Modifier
@@ -417,20 +424,15 @@ fun NumericHabitCard(
                                     )
                                 )
                             }
-                            if (selectedDate == today) {
-                                onDecrementToday()
-                            } else {
-                                val currentVal = currentWeekValues.getOrNull(selectedDayIndex) ?: 0f
-                                val newVal = maxOf(0f, currentVal - habit.step)
-                                onSetValue(selectedDate, if (newVal > 0f) newVal else null)
-                            }
+                            onDecrement(selectedDate)
                         },
-                        enabled = selectedDateIsScheduled && selectedValue > 0,
+                        enabled = selectedDateIsEditable && selectedValue > 0,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = habitColor.copy(alpha = 0.60f),
                             contentColor = habitColor
                         ),
                         modifier = Modifier
+                            .testTag("benchmark_habit_numeric_decrement")
                             .graphicsLayer {
                                 scaleX = decScale.value
                                 scaleY = decScale.value
@@ -468,20 +470,15 @@ fun NumericHabitCard(
                                     )
                                 )
                             }
-                            if (selectedDate == today) {
-                                onIncrementToday()
-                            } else {
-                                val currentVal = currentWeekValues.getOrNull(selectedDayIndex) ?: 0f
-                                val newVal = currentVal + habit.step
-                                onSetValue(selectedDate, newVal)
-                            }
+                            onIncrement(selectedDate)
                         },
-                        enabled = selectedDateIsScheduled,
+                        enabled = selectedDateIsEditable,
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = habitColor.copy(alpha = 0.60f),
                             contentColor = habitColor
                         ),
                         modifier = Modifier
+                            .testTag("benchmark_habit_numeric_increment")
                             .graphicsLayer {
                                 scaleX = incScale.value
                                 scaleY = incScale.value
@@ -503,3 +500,12 @@ fun NumericHabitCard(
         }
     }
 }
+
+internal fun canEditNumericHabitOnDate(
+    habit: Habit,
+    date: LocalDate,
+    today: LocalDate,
+): Boolean =
+    !date.isBefore(habit.createdAt) &&
+        !date.isAfter(today) &&
+        habit.isScheduledFor(date)

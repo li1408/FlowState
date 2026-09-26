@@ -46,7 +46,7 @@
     <string name="next">下一步</string>
     <string name="reminder_time_title">设置时间</string>
     <string name="permission_title">精确时间提醒已关闭</string>
-    <string name="permission_body">为确保按时提醒，请允许 FlowState 设置精确闹钟。</string>
+    <string name="permission_body">为确保按时提醒，请允许 30天计划 设置精确闹钟。</string>
     <string name="permission_settings">前往设置</string>
     <string name="reminder_past_time_error">请选择未来时间</string>
 
@@ -81,4 +81,31 @@
     <string name="access_create_task">创建任务</string>
     <string name="access_close">关闭</string>
     <string name="access_more_options">更多选项</string>
+    <string name="completion_sheet_title">完成这件事</string>
+    <string name="completion_sheet_subtitle">为“%1$s”留下这一刻</string>
+    <string name="completion_note_label">写下这一刻（可选）</string>
+    <string name="completion_take_photo">拍照</string>
+    <string name="completion_choose_photo">从相册选择</string>
+    <string name="completion_replace_photo">更换照片</string>
+    <string name="completion_remove_photo">删除照片</string>
+    <string name="completion_photo_preview">完成打卡照片预览</string>
+    <string name="completion_save">保存记录并完成</string>
+    <string name="completion_skip">跳过记录，直接完成</string>
+    <string name="completion_processing_photo">正在处理照片…</string>
+    <string name="completion_saving">正在保存…</string>
+    <string name="completion_error_photo">无法处理这张照片，请换一张重试。</string>
+    <string name="completion_error_save">保存失败，文字和照片仍为你保留。</string>
+    <string name="completion_error_missing_task">这项任务已不存在。</string>
+    <string name="completion_error_already_completed">这项任务已在其他入口完成。你的文字和照片仍在这里，没有被覆盖。</string>
+    <string name="completion_progress">已完成 %1$d/%2$d</string>
+    <string name="completion_remaining">还剩 %1$d 件</string>
+    <string name="completion_completed_section">已完成（%1$d）</string>
+    <string name="completion_details_title">完成记录</string>
+    <string name="completion_no_note">没有文字记录</string>
+    <string name="completion_mark_pending">恢复为待完成</string>
+    <string name="completion_close">关闭</string>
+    <string name="access_mark_task_complete">标记任务为已完成</string>
+    <string name="access_mark_task_pending">恢复任务为待完成</string>
+    <string name="access_task_state_completed">已完成</string>
+    <string name="access_task_state_pending">待完成</string>
 </resources>

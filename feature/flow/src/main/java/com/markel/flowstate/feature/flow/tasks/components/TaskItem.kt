@@ -1,6 +1,5 @@
 package com.markel.flowstate.feature.flow.tasks.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -9,14 +8,10 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,10 +23,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
@@ -42,9 +35,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,9 +44,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,7 +60,6 @@ import com.markel.flowstate.core.domain.SubTask
 import com.markel.flowstate.core.domain.Task
 import com.markel.flowstate.feature.tasks.R
 import com.markel.flowstate.feature.flow.tasks.util.asColor
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,38 +67,39 @@ fun AnimatableTaskItem(
     task: Task,
     shape: Shape,
     onDelete: () -> Unit,
-    onComplete: () -> Unit,
-    onContentClick: () -> Unit
+    onToggle: () -> Unit,
+    onContentClick: () -> Unit,
+    isCelebrating: Boolean = false,
+    swipeEnabled: Boolean = true,
+    toggleEnabled: Boolean = true,
 ) {
-    var isCheckedLocally by remember { mutableStateOf(task.isDone) }
-
-    LaunchedEffect(isCheckedLocally) {
-        if (isCheckedLocally && !task.isDone) {
-            delay(250)  // Animation purpose only, the completion is delayed only to animate the checkbox giving feedback that the task was completed
-            onComplete()
-        }
-    }
-
-    SwipeToDeleteContainer(
-        item = task,
-        onDelete = {
-            onDelete()
-        }
-    ) {
+    val content: @Composable () -> Unit = {
         TaskItemContent(
+            taskId = task.id,
             title = task.title,
             description = task.description,
             subTasks = task.subTasks,
-            isDone = isCheckedLocally,
+            isDone = task.isDone,
             priority = task.priority,
             dueDate = task.dueDate,
             reminderTime = task.reminderTime,
             shape = shape,
             onClicked = onContentClick,
-            onCheckClicked = {
-                isCheckedLocally = true
-            }
+            onCheckClicked = onToggle,
+            isCelebrating = isCelebrating,
+            toggleEnabled = toggleEnabled,
         )
+    }
+
+    if (swipeEnabled) {
+        SwipeToDeleteContainer(
+            item = task,
+            onDelete = onDelete,
+        ) {
+            content()
+        }
+    } else {
+        content()
     }
 }
 
@@ -199,6 +193,7 @@ fun DeleteSwipeBackground(
 
 @Composable
 fun TaskItemContent(
+    taskId: Int,
     title: String,
     description: String = "",
     subTasks: List<SubTask> = emptyList(),
@@ -208,14 +203,44 @@ fun TaskItemContent(
     reminderTime: Long? = null,
     shape: Shape,
     onClicked: () -> Unit,
-    onCheckClicked: () -> Unit
+    onCheckClicked: () -> Unit,
+    isCelebrating: Boolean = false,
+    toggleEnabled: Boolean = true,
 ) {
     val priorityColor = priority.asColor()
+    val itemScale by animateFloatAsState(
+        targetValue = if (isCelebrating) 1.018f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "task_celebration_scale",
+    )
+    val itemBackground by animateColorAsState(
+        targetValue = if (isCelebrating) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f)
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        },
+        animationSpec = tween(durationMillis = 240),
+        label = "task_celebration_background",
+    )
+    val itemBorder by animateColorAsState(
+        targetValue = if (isCelebrating) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.42f)
+        } else {
+            Color.Transparent
+        },
+        animationSpec = tween(durationMillis = 240),
+        label = "task_celebration_border",
+    )
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .scale(itemScale)
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .background(itemBackground)
+            .border(1.dp, itemBorder, shape)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -224,7 +249,7 @@ fun TaskItemContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp, vertical = 16.dp),
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val borderBaseColor = if (priority == Priority.NOTHING)
@@ -246,33 +271,49 @@ fun TaskItemContent(
                 animationSpec = spring(dampingRatio = 0.5f, stiffness = 400f),
                 label = "check_scale"
             )
+            val checkStateDescription = stringResource(
+                if (isDone) R.string.access_task_state_completed
+                else R.string.access_task_state_pending,
+            )
 
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(19.dp)
-                    .clip(RoundedCornerShape(7.dp))
-                    .background(checkBgColor)
-                    .border(1.5.dp, checkBorderColor, RoundedCornerShape(7.dp))
-                    .clickable(
+                    .size(48.dp)
+                    .testTag("task_checkbox_$taskId")
+                    .semantics {
+                        stateDescription = checkStateDescription
+                    }
+                    .toggleable(
+                        value = isDone,
+                        enabled = toggleEnabled,
+                        role = Role.Checkbox,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onCheckClicked
-                    )
+                        onValueChange = { onCheckClicked() },
+                    ),
             ) {
-                if (checkScale > 0f) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.check_24px),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .scale(checkScale)
-                    )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(19.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .background(checkBgColor)
+                        .border(1.5.dp, checkBorderColor, RoundedCornerShape(7.dp)),
+                ) {
+                    if (checkScale > 0f) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.check_24px),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .scale(checkScale),
+                        )
+                    }
                 }
-
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(2.dp))
             Column(modifier = Modifier.weight(1f)) {
                 val taskTitleStyle = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Medium,

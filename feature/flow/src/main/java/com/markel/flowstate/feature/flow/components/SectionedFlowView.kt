@@ -17,15 +17,18 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.markel.flowstate.core.designsystem.ui.LocalBottomNavigationInset
 import com.markel.flowstate.core.domain.CheckList
 import com.markel.flowstate.core.domain.Idea
 import com.markel.flowstate.core.domain.Task
@@ -58,6 +61,8 @@ fun SectionedFlowView(
     onTaskClick: (Task) -> Unit,
     onTaskDelete: (Task) -> Unit,
     onTaskToggle: (Task) -> Unit,
+    onTaskReopen: (Task) -> Unit,
+    onCompletedTaskClick: (Task) -> Unit,
     onTaskReorder: (from: Int, to: Int) -> Unit,
     // Idea callbacks
     onIdeaClick: (Idea) -> Unit,
@@ -78,8 +83,13 @@ fun SectionedFlowView(
 ) {
     if (uiState !is FlowUiState.Success) return
 
-    // Empty state when all lists are empty
-    val allEmpty = uiState.tasks.isEmpty()
+    val hasAnyTasks = uiState.totalCount > 0 ||
+            uiState.tasks.isNotEmpty() ||
+            uiState.completedTasks.isNotEmpty()
+
+    // A completed final task still belongs to this screen and must not flash
+    // the empty state while it moves into the completion history section.
+    val allEmpty = !hasAnyTasks
             && uiState.checkLists.isEmpty()
             && uiState.ideas.isEmpty()
 
@@ -111,17 +121,22 @@ fun SectionedFlowView(
     )
     val itemFadeInSpec = spring<Float>(stiffness = Spring.StiffnessMediumLow)
     val itemFadeOutSpec = tween<Float>(durationMillis = 130, easing = FastOutLinearInEasing)
+    val bottomNavigationInset = LocalBottomNavigationInset.current
 
     LazyColumn(
         state = outerListState,
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 40.dp)
+        modifier = modifier
+            .fillMaxSize()
+            .testTag("benchmark_flow_list"),
+        contentPadding = PaddingValues(bottom = 40.dp + bottomNavigationInset)
     ) {
         // ── Tasks ──────────────────────────────────────────────────────────
-        if (uiState.tasks.isNotEmpty()) {
+        if (hasAnyTasks) {
             item(key = "tasks_header") {
-                SectionHeader(
-                    title = stringResource(R.string.tasks_m),
+                TaskSectionHeader(
+                    completedCount = uiState.completedCount,
+                    remainingCount = uiState.remainingCount,
+                    totalCount = uiState.totalCount,
                     modifier = Modifier
                         .animateItem(
                             fadeInSpec = itemFadeInSpec,
@@ -131,7 +146,9 @@ fun SectionedFlowView(
                         .padding(horizontal = 20.dp, vertical = 8.dp)
                 )
             }
-            item {
+            // Keep these two slots stable: pending task reorder maps list indices
+            // with headerOffset = 2 above.
+            item(key = "tasks_reminder_banner") {
                 ReminderPermissionBanner(showPermissionBanner)
             }
             itemsIndexed(
@@ -178,8 +195,78 @@ fun SectionedFlowView(
                             task = task,
                             shape = itemShape,
                             onDelete = { onTaskDelete(task) },
-                            onComplete = { onTaskToggle(task) },
-                            onContentClick = { onTaskClick(task) }
+                            onToggle = {
+                                if (task.isDone) onTaskReopen(task) else onTaskToggle(task)
+                            },
+                            onContentClick = { onTaskClick(task) },
+                            isCelebrating = task.id == uiState.retainedTaskId,
+                            swipeEnabled = !task.isDone,
+                            toggleEnabled = task.id != uiState.retainedTaskId,
+                        )
+                    }
+                }
+            }
+
+            if (uiState.completedTasks.isNotEmpty()) {
+                item(key = "completed_tasks_header") {
+                    Text(
+                        text = stringResource(
+                            R.string.completion_completed_section,
+                            uiState.completedTasks.size,
+                        ),
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp,
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .animateItem(
+                                fadeInSpec = itemFadeInSpec,
+                                placementSpec = itemPlacementSpec,
+                                fadeOutSpec = itemFadeOutSpec,
+                            )
+                            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp),
+                    )
+                }
+                itemsIndexed(
+                    items = uiState.completedTasks,
+                    // Reuse the pending-row key so Compose can animate the same
+                    // task into the completed section instead of replacing it.
+                    key = { _, task -> Pair(task.id, taskDeleteVersions[task.id] ?: 0) },
+                ) { index, task ->
+                    val itemShape = when {
+                        uiState.completedTasks.size == 1 -> RoundedCornerShape(16.dp)
+                        index == 0 -> RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                            bottomStart = 4.dp,
+                            bottomEnd = 4.dp,
+                        )
+                        index == uiState.completedTasks.lastIndex -> RoundedCornerShape(
+                            topStart = 4.dp,
+                            topEnd = 4.dp,
+                            bottomStart = 16.dp,
+                            bottomEnd = 16.dp,
+                        )
+                        else -> RoundedCornerShape(4.dp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .animateItem(
+                                fadeInSpec = itemFadeInSpec,
+                                placementSpec = itemPlacementSpec,
+                                fadeOutSpec = itemFadeOutSpec,
+                            )
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 1.dp),
+                    ) {
+                        AnimatableTaskItem(
+                            task = task,
+                            shape = itemShape,
+                            onDelete = {},
+                            onToggle = { onTaskReopen(task) },
+                            onContentClick = { onCompletedTaskClick(task) },
+                            swipeEnabled = false,
                         )
                     }
                 }
@@ -266,4 +353,43 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier
     )
+}
+
+@Composable
+private fun TaskSectionHeader(
+    completedCount: Int,
+    remainingCount: Int,
+    totalCount: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.tasks_m),
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+            ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = stringResource(
+                    R.string.completion_progress,
+                    completedCount,
+                    totalCount,
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = stringResource(R.string.completion_remaining, remainingCount),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }

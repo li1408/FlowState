@@ -5,17 +5,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.animateFloatingActionButton
+import com.markel.flowstate.core.designsystem.ui.LocalBottomNavigationInset
 import com.markel.flowstate.core.designsystem.ui.rememberFabVisibilityState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -42,6 +44,7 @@ fun HabitScreen(
     onNavigateToDetail: (habitId: Int) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val bottomNavigationInset = LocalBottomNavigationInset.current
 
     Box(
         modifier = Modifier
@@ -90,11 +93,22 @@ fun HabitScreen(
                         }
                         LazyColumn(
                             state = listState,
-                            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                            contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp)
+                                .testTag("benchmark_habits_list"),
+                            contentPadding = PaddingValues(
+                                top = 16.dp,
+                                bottom = bottomNavigationInset + 100.dp,
+                            ),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(state.habits, key = { it.habit.id }) { habitWithStatus ->
+                            itemsIndexed(
+                                items = state.habitCards,
+                                key = { _, card -> card.habitWithStatus.habit.id },
+                                contentType = { _, card -> card.habitWithStatus.habit.habitType },
+                            ) { visualIndex, card ->
+                                val habitWithStatus = card.habitWithStatus
                                 ReorderableItem(reorderableState, key = habitWithStatus.habit.id) { isDragging ->
 
                                     val scale by animateFloatAsState(
@@ -104,8 +118,10 @@ fun HabitScreen(
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .testTag("benchmark_habit_reorder_handle")
                                             .longPressDraggableHandle(
-                                                interactionSource = remember { MutableInteractionSource() }
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                onDragStopped = { viewModel.onReorderStopped() },
                                             )
                                             .graphicsLayer {
                                                 scaleX = scale
@@ -114,13 +130,24 @@ fun HabitScreen(
                                             }
                                             .zIndex(if (isDragging) 1f else 0f)
                                     ) {
+                                        // A stable per-row sentinel lets the
+                                        // benchmark prove that a drag really
+                                        // traversed all 30 fixture rows.
+                                        Box(
+                                            modifier = Modifier
+                                                .matchParentSize()
+                                                .testTag(
+                                                    "benchmark_habit_reorder_handle_" +
+                                                        habitWithStatus.habit.id +
+                                                        "_position_" + visualIndex
+                                                )
+                                        )
 
                                         when (habitWithStatus.habit.habitType) {
                                             HabitType.BOOLEAN -> {
                                                 HabitCard(
                                                     habitWithStatus = habitWithStatus,
-                                                    weekEntries = state.weekEntriesByHabit[habitWithStatus.habit.id]
-                                                        ?: emptySet(),
+                                                    weekEntries = card.weekEntries,
                                                     onToggleDay = { date ->
                                                         viewModel.toggleBooleanHabitOnDate(
                                                             habitWithStatus.habit.id,
@@ -152,21 +179,18 @@ fun HabitScreen(
                                             HabitType.NUMERIC -> {
                                                 NumericHabitCard(
                                                     habitWithStatus = habitWithStatus,
-                                                    allEntries = state.numericEntriesByHabit[habitWithStatus.habit.id]
-                                                        ?: emptyList(),
-                                                    onIncrementToday = {
+                                                    allEntries = card.numericEntries,
+                                                    onIncrement = { date ->
                                                         viewModel.incrementNumericHabit(
                                                             habitId = habitWithStatus.habit.id,
-                                                            date = LocalDate.now(),
-                                                            currentValue = habitWithStatus.todayValue,
+                                                            date = date,
                                                             step = habitWithStatus.habit.step
                                                         )
                                                     },
-                                                    onDecrementToday = {
+                                                    onDecrement = { date ->
                                                         viewModel.decrementNumericHabit(
                                                             habitId = habitWithStatus.habit.id,
-                                                            date = LocalDate.now(),
-                                                            currentValue = habitWithStatus.todayValue,
+                                                            date = date,
                                                             step = habitWithStatus.habit.step
                                                         )
                                                     },
@@ -251,6 +275,7 @@ fun HabitScreen(
                     visible = fabVisible,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
+                        .padding(bottom = bottomNavigationInset)
                         .zIndex(1f)
                 )
             }

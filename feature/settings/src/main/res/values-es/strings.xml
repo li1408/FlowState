@@ -11,7 +11,7 @@
     <string name="settings_language_description">Cambiar idioma de la app</string>
     <string name="settings_info">Información</string>
     <string name="settings_about">Acerca de</string>
-    <string name="settings_about_description">FlowState v%1$s</string>
+    <string name="settings_about_description">30天计划 v%1$s</string>
     <string name="ok">Vale</string>
     <string name="cancel">Cancelar</string>
 
@@ -32,11 +32,13 @@
 
     <!-- About screen -->
     <string name="about_title">Acerca de</string>
-    <string name="about_app_name">FlowState</string>
+    <string name="about_app_name">30天计划</string>
     <string name="about_developer">Desarrollador</string>
-    <string name="about_developer_name">Markel</string>
+    <string name="about_developer_name">li1408</string>
     <string name="about_license">Licencia</string>
-    <string name="about_license_description">Apache-2.0</string>
+    <string name="about_license_description">Apache-2.0 · ISC</string>
+    <string name="android_liquid_glass_attribution">AndroidLiquidGlass\nCopyright 2025 Kyant\nAdaptado y modificado para 30天计划 bajo Apache-2.0.</string>
+    <string name="konfetti_attribution">Konfetti 2.0.5\nCopyright (c) 2017 Dion Segijn\nUtilizado bajo la licencia ISC.</string>
     <string name="about_version">v%1$s</string>
     <string name="about_github">GitHub</string>
 
@@ -67,10 +69,10 @@
     <!-- Backup screen -->
     <string name="backup_title">Copia de seguridad</string>
     <string name="backup_export">Exportar datos</string>
-    <string name="backup_export_description">Guarda todos tus datos a un archivo JSON</string>
+    <string name="backup_export_description">Guarda tareas y registros en JSON (no incluye las fotos de registro)</string>
     <string name="backup_restore">Restaurar</string>
     <string name="backup_restore_description">Restaurar datos desde un archivo JSON</string>
-    <string name="backup_file_name">FlowState-Copia-%1$s.json</string>
+    <string name="backup_file_name">30天计划-Copia-%1$s.json</string>
 
     <!-- Categorías -->
     <string name="categories_title">Categorías</string>

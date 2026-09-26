@@ -10,7 +10,7 @@
     <string name="settings_language_description">更改应用语言</string>
     <string name="settings_info">信息</string>
     <string name="settings_about">关于</string>
-    <string name="settings_about_description">FlowState v%1$s</string>
+    <string name="settings_about_description">30天计划 v%1$s</string>
     <string name="ok">确定</string>
     <string name="cancel">取消</string>
 
@@ -29,11 +29,13 @@
     <string name="tab_settings">设置</string>
 
     <string name="about_title">关于</string>
-    <string name="about_app_name">FlowState</string>
+    <string name="about_app_name">30天计划</string>
     <string name="about_developer">开发者</string>
-    <string name="about_developer_name">Markel</string>
+    <string name="about_developer_name">li1408</string>
     <string name="about_license">开源许可</string>
-    <string name="about_license_description">Apache-2.0</string>
+    <string name="about_license_description">Apache-2.0 · ISC</string>
+    <string name="android_liquid_glass_attribution">AndroidLiquidGlass\nCopyright 2025 Kyant\n基于 Apache-2.0 许可改编并用于 30天计划。</string>
+    <string name="konfetti_attribution">Konfetti 2.0.5\nCopyright (c) 2017 Dion Segijn\n依据 ISC 许可证使用。</string>
     <string name="about_version">版本 %1$s</string>
     <string name="about_github">GitHub</string>
 
@@ -59,10 +61,10 @@
 
     <string name="backup_title">备份</string>
     <string name="backup_export">导出数据</string>
-    <string name="backup_export_description">将全部数据保存为 JSON 文件</string>
+    <string name="backup_export_description">将任务和记录保存为 JSON（不包含打卡照片）</string>
     <string name="backup_restore">恢复数据</string>
     <string name="backup_restore_description">从备份文件恢复数据</string>
-    <string name="backup_file_name">FlowState-备份-%1$s.json</string>
+    <string name="backup_file_name">30天计划-备份-%1$s.json</string>
 
     <string name="categories_title">分类</string>
     <string name="categories_settings_description">使用分类标签页整理事项</string>

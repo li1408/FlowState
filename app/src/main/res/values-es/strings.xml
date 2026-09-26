@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">30天计划</string>
+    <string name="completion_celebration_title">Reto completado</string>
+    <string name="completion_celebration_progress">Completadas %1$d de %2$d · Quedan %3$d</string>
+    <string name="completion_celebration_all_done">Has completado los %1$d retos</string>
+    <string name="completion_celebration_announcement">%1$s. %2$s</string>
+</resources>

@@ -1,66 +1,60 @@
 package com.markel.flowstate.core.domain.usecase.habits
 
 import com.markel.flowstate.core.domain.Habit
+import com.markel.flowstate.core.domain.HabitDashboardData
 import com.markel.flowstate.core.domain.HabitEntryFlat
 import com.markel.flowstate.core.domain.HabitNumericEntry
 import com.markel.flowstate.core.domain.HabitRepository
 import com.markel.flowstate.core.domain.HabitStreakCalculator
 import com.markel.flowstate.core.domain.HabitType
 import com.markel.flowstate.core.domain.HabitWithStatus
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
 
 class GetHabitsWithStatusUseCase @Inject constructor(
     private val repository: HabitRepository
 ) {
-    @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(date: LocalDate = LocalDate.now()): Flow<List<HabitWithStatus>> {
-        // First we get the habits, then we combine them (boolean + numeric)
-        return repository.getHabits()
-            .flatMapLatest { habits ->
-                if (habits.isEmpty()) return@flatMapLatest flowOf(emptyList())
+        return observeDashboard(date).map { it.habits }
+    }
 
-                // Boolean habits flow
-                val boolFlow = repository.getAllEntries()
+    /**
+     * Observes the dashboard through exactly one habits query, one boolean
+     * entries query and one numeric entries query. Expensive history grouping
+     * and streak calculations run away from the main thread.
+     */
+    fun observeDashboard(date: LocalDate = LocalDate.now()): Flow<HabitDashboardData> {
+        return observeDashboardOnDates(flowOf(date))
+    }
 
-                // A flow for every numeric habit, combined within one only flow
-                // Map<habitId, List<HabitNumericEntry>>
-                val numericFlows = habits
-                    .filter { it.habitType == HabitType.NUMERIC }
-                    .map { habit -> repository.getNumericEntries(habit.id) }
-
-                if (numericFlows.isEmpty()) {
-                    boolFlow.combine(flowOf(emptyMap<Int, List<HabitNumericEntry>>())) { entries, numeric ->
-                        buildStatus(habits, entries.groupBy { it.habitId }, numeric, date)
-                    }
-                } else {
-                    val numericHabitIds = habits
-                        .filter { it.habitType == HabitType.NUMERIC }
-                        .map { it.id }
-
-                    val combinedNumeric: Flow<Map<Int, List<HabitNumericEntry>>> =
-                        numericFlows.reduce { acc, flow ->
-                            acc.combine(flow) { a, b -> a + b }
-                        }.combine(flowOf(numericHabitIds)) { allEntries, ids ->
-                            allEntries.groupBy { it.habitId }
-                                .filterKeys { it in ids }
-                        }
-
-                    boolFlow.combine(combinedNumeric) { boolEntries, numericByHabit ->
-                        buildStatus(
-                            habits = habits,
-                            boolEntriesByHabit = boolEntries.groupBy { it.habitId },
-                            numericByHabit = numericByHabit,
-                            date = date
-                        )
-                    }
-                }
-            }
+    /** Recomputes the dashboard whenever the active local date changes. */
+    fun observeDashboardOnDates(dates: Flow<LocalDate>): Flow<HabitDashboardData> {
+        return combine(
+            repository.getHabits(),
+            repository.getAllEntries(),
+            repository.getAllNumericEntries(),
+            dates,
+        ) { habits, booleanEntries, numericEntries, date ->
+            val booleanEntriesByHabit = booleanEntries.groupBy { it.habitId }
+            val numericEntriesByHabit = numericEntries.groupBy { it.habitId }
+            HabitDashboardData(
+                habits = buildStatus(
+                    habits = habits,
+                    boolEntriesByHabit = booleanEntriesByHabit,
+                    numericByHabit = numericEntriesByHabit,
+                    date = date,
+                ),
+                date = date,
+                booleanEntriesByHabit = booleanEntriesByHabit,
+                numericEntriesByHabit = numericEntriesByHabit,
+            )
+        }.flowOn(Dispatchers.Default)
     }
 
     private fun buildStatus(

@@ -1,6 +1,8 @@
 package com.markel.flowstate.feature.flow
 
 import app.cash.turbine.test
+import androidx.lifecycle.SavedStateHandle
+import com.markel.flowstate.core.data.TaskCompletionPhotoStore
 import com.markel.flowstate.core.data.UserPreferencesRepository
 import com.markel.flowstate.core.domain.Category
 import com.markel.flowstate.core.domain.CategoryRepository
@@ -12,6 +14,8 @@ import com.markel.flowstate.core.domain.IdeaRepository
 import com.markel.flowstate.core.domain.SubTask
 import com.markel.flowstate.core.domain.TaskRepository
 import com.markel.flowstate.core.domain.usecase.tasks.DeleteTaskUseCase
+import com.markel.flowstate.core.domain.usecase.tasks.CompleteTaskUseCase
+import com.markel.flowstate.core.domain.usecase.tasks.ReopenTaskUseCase
 import com.markel.flowstate.core.notifications.ReminderScheduler
 import com.markel.flowstate.core.testing.util.MainDispatcherRule
 import io.mockk.coEvery
@@ -43,6 +47,9 @@ class FlowViewModelTest {
     private val userPreferencesRepository: UserPreferencesRepository = mockk(relaxed = true)
     private val reminderScheduler: ReminderScheduler = mockk(relaxed = true)
     private val deleteTaskUseCase: DeleteTaskUseCase = mockk(relaxed = true)
+    private val completeTaskUseCase: CompleteTaskUseCase = mockk(relaxed = true)
+    private val reopenTaskUseCase: ReopenTaskUseCase = mockk(relaxed = true)
+    private val completionPhotoStore: TaskCompletionPhotoStore = mockk(relaxed = true)
 
     private lateinit var viewModel: FlowViewModel
 
@@ -69,11 +76,7 @@ class FlowViewModelTest {
         coEvery { categoryRepository.getCategories() } returns flowOf(categories)
         coEvery { userPreferencesRepository.categoriesEnabled } returns flowOf(categoriesEnabled)
         coEvery { userPreferencesRepository.lastCategoryId } returns flowOf(null)
-        return FlowViewModel(
-            taskRepository, ideaRepository, checkListRepository, categoryRepository,
-            userPreferencesRepository, reminderScheduler, deleteTaskUseCase,
-            applicationScope
-        )
+        return createViewModelWithDependencies(applicationScope)
     }
 
     // ── Initialization & Combine logic ────────────────────────────────────────
@@ -671,11 +674,7 @@ class FlowViewModelTest {
         // The persisted last visited category is cat1.
         coEvery { userPreferencesRepository.lastCategoryId } returns flowOf(cat1)
 
-        viewModel = FlowViewModel(
-            taskRepository, ideaRepository, checkListRepository, categoryRepository,
-            userPreferencesRepository, reminderScheduler, deleteTaskUseCase,
-            defaultTestApplicationScope
-        )
+        viewModel = createViewModelWithDependencies(defaultTestApplicationScope)
 
         viewModel.uiState.test {
             var state: FlowUiState.Success? = null
@@ -701,11 +700,7 @@ class FlowViewModelTest {
         coEvery { userPreferencesRepository.categoriesEnabled } returns flowOf(true)
         coEvery { userPreferencesRepository.lastCategoryId } returns flowOf(99)
 
-        viewModel = FlowViewModel(
-            taskRepository, ideaRepository, checkListRepository, categoryRepository,
-            userPreferencesRepository, reminderScheduler, deleteTaskUseCase,
-            defaultTestApplicationScope
-        )
+        viewModel = createViewModelWithDependencies(defaultTestApplicationScope)
 
         viewModel.uiState.test {
             var state: FlowUiState.Success? = null
@@ -800,5 +795,20 @@ class FlowViewModelTest {
             assertEquals(1, state.pendingTaskCounts[cat1])
         }
     }
+
+    private fun createViewModelWithDependencies(applicationScope: CoroutineScope) = FlowViewModel(
+        taskRepository = taskRepository,
+        ideaRepository = ideaRepository,
+        checkListRepository = checkListRepository,
+        categoryRepository = categoryRepository,
+        userPreferencesRepository = userPreferencesRepository,
+        reminderScheduler = reminderScheduler,
+        deleteTaskUseCase = deleteTaskUseCase,
+        completeTaskUseCase = completeTaskUseCase,
+        reopenTaskUseCase = reopenTaskUseCase,
+        completionPhotoStore = completionPhotoStore,
+        applicationScope = applicationScope,
+        savedStateHandle = SavedStateHandle(),
+    )
 
 }

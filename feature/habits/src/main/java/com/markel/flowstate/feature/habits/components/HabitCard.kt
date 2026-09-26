@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -17,21 +18,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource // Added import
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kizitonwose.calendar.compose.WeekCalendar
-import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
 import com.markel.flowstate.core.domain.HabitWithStatus
 import com.markel.flowstate.core.domain.isScheduledFor
 import com.markel.flowstate.feature.habits.R
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.util.Locale
-import androidx.compose.ui.platform.LocalLocale
-import androidx.compose.ui.text.style.TextOverflow
 
 @Composable
 fun HabitCard(
@@ -53,14 +53,19 @@ fun HabitCard(
     val isScheduledToday = habit.isScheduledFor(today)
     val isCompletedToday = isScheduledToday && today.toEpochDay() in weekEntries
 
-    // State for the WeekCalendar — starts in the current week,
-    // can scroll back to the beginning of the habit
-    val weekState = rememberWeekCalendarState(
-        startDate = java.time.LocalDate.parse(habit.createdAt.toString()),
-        endDate = today,
-        firstVisibleWeekDate = today,
-        firstDayOfWeek = DayOfWeek.MONDAY
-    )
+    var weekOffset by remember(habit.id) { mutableIntStateOf(0) }
+    val weekStart = remember(today, weekOffset) {
+        today.with(DayOfWeek.MONDAY).plusWeeks(weekOffset.toLong())
+    }
+    val creationWeekStart = remember(habit.createdAt) {
+        habit.createdAt.with(DayOfWeek.MONDAY)
+    }
+    val visibleDates = remember(weekStart) {
+        List(7) { index -> weekStart.plusDays(index.toLong()) }
+    }
+    val canGoBack = weekStart.isAfter(creationWeekStart)
+    val canGoForward = weekOffset < 0
+    val swipeThresholdPx = with(LocalDensity.current) { 48.dp.toPx() }
 
     val surfaceColor = MaterialTheme.colorScheme.surfaceContainer
     val cardBg by animateColorAsState(
@@ -137,7 +142,8 @@ fun HabitCard(
                     color = habitColor,
                     iconName = habit.iconName,
                     onClick = { onToggleDay(today) },
-                    enabled = isScheduledToday
+                    enabled = isScheduledToday,
+                    modifier = Modifier.testTag("benchmark_habit_boolean_toggle"),
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -189,14 +195,31 @@ fun HabitCard(
                 }
             }
 
-            // ── WeekCalendar ────────────────────────
-            WeekCalendar(
-                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
-                state = weekState,
-                dayContent = { weekDay ->
-                    val date = weekDay.date
+            // Lightweight seven-day row; swipe once to move one week.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .pointerInput(canGoBack, canGoForward, swipeThresholdPx) {
+                        var totalDrag = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { totalDrag = 0f },
+                            onDragCancel = { totalDrag = 0f },
+                            onHorizontalDrag = { _, amount -> totalDrag += amount },
+                            onDragEnd = {
+                                when {
+                                    totalDrag <= -swipeThresholdPx && canGoForward -> weekOffset++
+                                    totalDrag >= swipeThresholdPx && canGoBack -> weekOffset--
+                                }
+                                totalDrag = 0f
+                            },
+                        )
+                    },
+            ) {
+                visibleDates.forEach { date ->
                     val isDone = date.toEpochDay() in weekEntries
                     val isFuture = date.isAfter(today)
+                    val isBeforeCreation = date.isBefore(habit.createdAt)
                     val isToday = date == today
                     val isScheduled = habit.isScheduledFor(date)
 
@@ -229,18 +252,22 @@ fun HabitCard(
                     )
 
                     val bgColor by animateColorAsState(
-                        targetValue = if (isDone && !isFuture) habitColor else Color.Transparent,
+                        targetValue = if (isDone && !isFuture && !isBeforeCreation) {
+                            habitColor
+                        } else {
+                            Color.Transparent
+                        },
                         animationSpec = spring(stiffness = 400f),
                         label = "day_bg_${date.dayOfMonth}"
                     )
 
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .weight(1f)
                             .clip(animatedShape)
                             .background(bgColor)
                             .then(
-                                if (!isFuture && isScheduled) Modifier.clickable(
+                                if (!isFuture && !isBeforeCreation && isScheduled) Modifier.clickable(
                                     role = Role.Button,
                                     onClick = { onToggleDay(date) }
                                 ) else Modifier
@@ -256,8 +283,9 @@ fun HabitCard(
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
                                 color = when {
-                                    isDone && !isFuture -> Color.White
-                                    isFuture -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
+                                    isDone && !isFuture && !isBeforeCreation -> Color.White
+                                    isFuture || isBeforeCreation ->
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
                                     !isScheduled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                                     isToday -> MaterialTheme.colorScheme.onSurface
                                     else -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -270,8 +298,8 @@ fun HabitCard(
                                 style = MaterialTheme.typography.labelMedium,
                                 fontSize = 10.sp,
                                 color = when {
-                                    isDone && !isFuture -> Color.White.copy(alpha = 0.8f)
-                                    isFuture || !isScheduled ->
+                                    isDone && !isFuture && !isBeforeCreation -> Color.White.copy(alpha = 0.8f)
+                                    isFuture || isBeforeCreation || !isScheduled ->
                                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                                     else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                 }
@@ -279,7 +307,7 @@ fun HabitCard(
                         }
                     }
                 }
-            )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
         }

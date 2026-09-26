@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.markel.flowstate.core.designsystem.ui.LocalBottomNavigationInset
 import com.markel.flowstate.feature.settings.components.settingsItemShape
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -45,6 +46,7 @@ fun SettingsScreen(
     notificationsEnabled: Boolean = true,
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val bottomNavigationInset = LocalBottomNavigationInset.current
     val handleItemClick: (SettingsItemData) -> Unit = { item ->
         when (item) {
             SettingsItemData.Notifications -> onNavigateToNotifications()
@@ -86,7 +88,7 @@ fun SettingsScreen(
                 start = 12.dp,
                 end = 12.dp,
                 top = 8.dp,
-                bottom = 30.dp
+                bottom = bottomNavigationInset + 30.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

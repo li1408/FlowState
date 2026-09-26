@@ -14,5 +14,11 @@ data class TaskWithSubTasks(
         parentColumn = "id", // ID in TaskEntity
         entityColumn = "taskId" // ID in SubTaskEntity
     )
-    val subTasks: List<SubTaskEntity>
+    val subTasks: List<SubTaskEntity>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "taskId",
+    )
+    val completion: TaskCompletionRecordEntity? = null,
 )

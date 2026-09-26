@@ -11,7 +11,7 @@
     <string name="settings_language_description">Change app language</string>
     <string name="settings_info">Info</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_description">FlowState v%1$s</string>
+    <string name="settings_about_description">30天计划 v%1$s</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
 
@@ -32,11 +32,13 @@
 
     <!-- About screen -->
     <string name="about_title">About</string>
-    <string name="about_app_name">FlowState</string>
+    <string name="about_app_name">30天计划</string>
     <string name="about_developer">Developer</string>
-    <string name="about_developer_name">Markel</string>
+    <string name="about_developer_name">li1408</string>
     <string name="about_license">License</string>
-    <string name="about_license_description">Apache-2.0</string>
+    <string name="about_license_description">Apache-2.0 · ISC</string>
+    <string name="android_liquid_glass_attribution">AndroidLiquidGlass\nCopyright 2025 Kyant\nAdapted and modified for 30天计划 under Apache-2.0.</string>
+    <string name="konfetti_attribution">Konfetti 2.0.5\nCopyright (c) 2017 Dion Segijn\nUsed under the ISC License.</string>
     <string name="about_version">v%1$s</string>
     <string name="about_github">GitHub</string>
 
@@ -67,10 +69,10 @@
     <!-- Backup screen -->
     <string name="backup_title">Backup</string>
     <string name="backup_export">Export data</string>
-    <string name="backup_export_description">Save all your data to a JSON file</string>
+    <string name="backup_export_description">Save tasks and records to JSON (check-in photos are not included)</string>
     <string name="backup_restore">Restore</string>
     <string name="backup_restore_description">Restore data from a backup file</string>
-    <string name="backup_file_name">FlowState-Backup-%1$s.json</string>
+    <string name="backup_file_name">30天计划-Backup-%1$s.json</string>
 
     <!-- Categories -->
     <string name="categories_title">Categories</string>

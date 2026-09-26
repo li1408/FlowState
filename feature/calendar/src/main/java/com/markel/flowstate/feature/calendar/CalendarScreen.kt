@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.markel.flowstate.core.designsystem.components.AnimatedUndoFab
+import com.markel.flowstate.core.designsystem.ui.LocalBottomNavigationInset
 import com.markel.flowstate.core.designsystem.ui.rememberFabVisibilityState
 import com.markel.flowstate.core.domain.Task
 import com.markel.flowstate.feature.calendar.components.CalendarContent
@@ -34,6 +35,7 @@ fun CalendarScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val draft by taskViewModel.draft.collectAsStateWithLifecycle()
+    val bottomNavigationInset = LocalBottomNavigationInset.current
 
     var showUndoButton by remember { mutableStateOf(false) }
     var pendingUndoTask by remember { mutableStateOf<Task?>(null) }
@@ -68,10 +70,12 @@ fun CalendarScreen(
                     }
                     showCreationSheet = true
                 },
-                modifier = Modifier.animateFloatingActionButton(
-                    visible = fabVisible,
-                    alignment = Alignment.BottomEnd,
-                )
+                modifier = Modifier
+                    .padding(bottom = bottomNavigationInset)
+                    .animateFloatingActionButton(
+                        visible = fabVisible,
+                        alignment = Alignment.BottomEnd,
+                    )
             ) {
                 Icon(
                     ImageVector.vectorResource(DesignR.drawable.add_24px),
@@ -161,6 +165,7 @@ fun CalendarScreen(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomStart)
+                    .padding(bottom = bottomNavigationInset)
             )
 
         }

@@ -16,13 +16,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
+private const val BENCHMARK_APPLICATION_ID = "com.markel.flowstate.benchmark"
 
 @Singleton
 class UserPreferencesRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    private val LAST_TAB_ROUTE = stringPreferencesKey("last_tab_route")
+
     val lastTab: Flow<MainTab> = context.dataStore.data.map { preferences ->
-        MainTab.fromName(preferences[stringPreferencesKey("last_tab_route")])
+        MainTab.fromName(preferences[LAST_TAB_ROUTE])
     }
     private val CALENDAR_VIEW_MODE = stringPreferencesKey("calendar_view_mode")
 
@@ -32,7 +35,7 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun saveLastTab(tab: MainTab) {
         context.dataStore.edit { preferences ->
-            preferences[stringPreferencesKey("last_tab_route")] = tab.name
+            preferences[LAST_TAB_ROUTE] = tab.name
         }
     }
 
@@ -89,6 +92,23 @@ class UserPreferencesRepository @Inject constructor(
         context.dataStore.edit { preferences ->
             preferences[BOTTOM_NAV_ORDER] = order.joinToString(",") { it.name }
             preferences[BOTTOM_NAV_HIDDEN] = hidden.map { it.name }.toSet()
+        }
+    }
+
+    /**
+     * Restores a deterministic preference snapshot for isolated performance
+     * tests. The repository-level package guard is deliberate defense in
+     * depth: production data cannot be cleared even if a caller is mistaken.
+     */
+    suspend fun resetForBenchmarkDefaults() {
+        check(context.packageName == BENCHMARK_APPLICATION_ID) {
+            "Benchmark preferences can only be reset in the isolated benchmark package"
+        }
+        context.dataStore.edit { preferences ->
+            preferences.clear()
+            preferences[LAST_TAB_ROUTE] = MainTab.TASKS.name
+            preferences[BOTTOM_NAV_ORDER] = MainTab.DEFAULT_ORDER.joinToString(",") { it.name }
+            preferences[BOTTOM_NAV_HIDDEN] = emptySet<String>()
         }
     }
 

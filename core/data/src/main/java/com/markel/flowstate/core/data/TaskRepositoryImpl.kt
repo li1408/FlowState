@@ -5,9 +5,12 @@ import com.markel.flowstate.core.data.local.TaskDao
 import com.markel.flowstate.core.data.local.TaskEntity
 import com.markel.flowstate.core.data.local.TaskWithSubTasks
 import com.markel.flowstate.core.domain.Category
+import com.markel.flowstate.core.domain.CompletionCommitStatus
 import com.markel.flowstate.core.domain.Priority
+import com.markel.flowstate.core.domain.ReopenTaskResult
 import com.markel.flowstate.core.domain.SubTask
 import com.markel.flowstate.core.domain.Task
+import com.markel.flowstate.core.domain.TaskCompletion
 import com.markel.flowstate.core.domain.TaskRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -22,7 +25,8 @@ import javax.inject.Inject
  * 3. Map (convert) data models (TaskEntity) to domain models (Task) and vice versa.
  */
 class TaskRepositoryImpl @Inject constructor(
-    private val dao: TaskDao // It will receive the DAO through dependency injection
+    private val dao: TaskDao, // It will receive the DAO through dependency injection
+    private val completionPhotoStore: TaskCompletionPhotoStore,
 ) : TaskRepository {
 
     override fun getTasks(): Flow<List<Task>> {
@@ -45,13 +49,15 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteTask(task: Task) {
-        // When deleting the parent, the DB's CASCADE will automatically delete the children
-        dao.deleteTaskEntity(task.toEntity())
+        // Resolve the current record in the deletion transaction. The task passed
+        // by the UI may be stale after the undo delay.
+        val currentPhotoId = dao.deleteTaskAndReturnPhotoId(task.id)
+        completionPhotoStore.deletePhoto(currentPhotoId ?: task.completion?.photoId)
     }
 
     override suspend fun updateTasksOrder(tasks: List<Task>) {
         val entities = tasks.map { it.toEntity() }
-        dao.updateTasks(entities)
+        dao.updateTaskPositions(entities)
     }
 
     override suspend fun clearTaskReminder(taskId: Int) {
@@ -60,6 +66,32 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun clearSubTaskReminder(subTaskId: String) {
         dao.clearSubTaskReminder(subTaskId)
+    }
+
+    override suspend fun completeTask(
+        taskId: Int,
+        completedAt: Long,
+        note: String?,
+        photoId: String?,
+    ): CompletionCommitStatus {
+        val previousPhotoId = dao.getCompletionRecord(taskId)?.photoId
+        val status = dao.commitTaskCompletion(
+            com.markel.flowstate.core.data.local.TaskCompletionRecordEntity(
+            taskId = taskId,
+            note = note,
+            photoId = photoId,
+            completedAt = completedAt,
+            ),
+        )
+        if (status == CompletionCommitStatus.Completed && previousPhotoId != photoId) {
+            completionPhotoStore.deletePhoto(previousPhotoId)
+        }
+        return status
+    }
+
+    override suspend fun reopenTask(taskId: Int): ReopenTaskResult {
+        val result = dao.reopenTask(taskId)
+        return ReopenTaskResult(reopened = result.reopened, photoId = result.photoId)
     }
 
     // --- MAPPING FUNCTIONS ---
@@ -79,7 +111,15 @@ class TaskRepositoryImpl @Inject constructor(
             completedAt = this.task.completedAt,
             reminderTime = this.task.reminderTime,
             subTasks = this.subTasks.map { it.toDomain() },
-            categoryId = this.task.categoryId ?: Category.GENERAL_ID
+            categoryId = this.task.categoryId ?: Category.GENERAL_ID,
+            completion = this.completion?.let { record ->
+                TaskCompletion(
+                    taskId = record.taskId,
+                    note = record.note,
+                    photoId = record.photoId,
+                    completedAt = record.completedAt,
+                )
+            },
         )
     }
 

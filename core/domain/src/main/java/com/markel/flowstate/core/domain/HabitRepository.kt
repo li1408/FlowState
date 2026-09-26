@@ -16,6 +16,7 @@ interface HabitRepository {
     suspend fun getHabitById(id: Int): Habit?
     fun getNumericEntries(habitId: Int): Flow<List<HabitNumericEntry>>
     suspend fun logNumericEntry(habitId: Int, date: LocalDate, value: Float)
+    suspend fun adjustNumericEntry(habitId: Int, date: LocalDate, delta: Float)
     suspend fun deleteNumericEntry(habitId: Int, date: LocalDate)
     suspend fun updatePositions(positions: List<Pair<Int, Int>>)
 }

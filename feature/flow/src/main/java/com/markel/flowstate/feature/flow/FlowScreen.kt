@@ -1,6 +1,9 @@
 package com.markel.flowstate.feature.flow
 
 import android.content.res.Configuration
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -17,8 +20,12 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.markel.flowstate.core.designsystem.components.AnimatedUndoFab
+import com.markel.flowstate.core.designsystem.feedback.CompletionCelebrationEvent
+import com.markel.flowstate.core.designsystem.feedback.LocalCompletionCelebrationHostState
+import com.markel.flowstate.core.designsystem.ui.LocalBottomNavigationInset
 import com.markel.flowstate.core.designsystem.ui.rememberFabVisibilityState
 import com.markel.flowstate.core.domain.Category
+import com.markel.flowstate.core.domain.Task
 import com.markel.flowstate.feature.flow.components.CategoryTabRow
 import com.markel.flowstate.feature.flow.components.CreateCategoryDialog
 import com.markel.flowstate.feature.flow.components.DynamicHeader
@@ -28,6 +35,9 @@ import com.markel.flowstate.feature.flow.tasks.TaskViewModel
 import com.markel.flowstate.feature.flow.tasks.components.TaskCreationSheetContent
 import com.markel.flowstate.feature.flow.tasks.util.HandleSystemBars
 import com.markel.flowstate.feature.flow.components.SectionedFlowView
+import com.markel.flowstate.feature.flow.completion.TaskCompletionDetailsSheet
+import com.markel.flowstate.feature.flow.completion.TaskCompletionSheet
+import com.markel.flowstate.feature.flow.completion.TaskCompletionUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,17 +53,46 @@ fun FlowScreen(
     val flowUiState by flowViewModel.uiState.collectAsStateWithLifecycle()
     val showPermissionBanner by flowViewModel.showReminderBanner.collectAsStateWithLifecycle()
     val showUndoButton by flowViewModel.showUndoButton.collectAsStateWithLifecycle()
+    val completionUiState by flowViewModel.completionUiState.collectAsStateWithLifecycle()
+    val celebrationHostState = LocalCompletionCelebrationHostState.current
+    val bottomNavigationInset = LocalBottomNavigationInset.current
     val taskDeleteVersions by flowViewModel.taskDeleteVersions.collectAsStateWithLifecycle()
     var isFabExpanded by remember { mutableStateOf(false) }
     var showCreationSheet by remember { mutableStateOf(false) }
     var showCreateCategoryDialog by remember { mutableStateOf(false) }
     var showReorderCategoriesSheet by remember { mutableStateOf(false) }
+    var selectedCompletedTask by remember { mutableStateOf<Task?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri != null) flowViewModel.importCompletionPhoto(uri)
+    }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+    ) { succeeded ->
+        flowViewModel.onCameraCaptureResult(succeeded)
+    }
+
+    val celebrating = completionUiState as? TaskCompletionUiState.Celebrating
+    LaunchedEffect(celebrating?.eventId) {
+        celebrating?.let { event ->
+            celebrationHostState.show(
+                CompletionCelebrationEvent(
+                    eventId = event.eventId,
+                    taskTitle = event.task.title,
+                    completedCount = event.completedCount,
+                    totalCount = event.totalCount,
+                ),
+            )
+        }
+    }
 
     // Only source of truth for the header
     var isHeaderMinimized by rememberSaveable { mutableStateOf(false) }
 
     val allEmpty = (flowUiState as? FlowUiState.Success)?.let {
-        it.tasks.isEmpty() && it.checkLists.isEmpty() && it.ideas.isEmpty()
+        it.totalCount == 0 && it.checkLists.isEmpty() && it.ideas.isEmpty()
     } ?: true
 
     val draft by taskViewModel.draft.collectAsStateWithLifecycle()  // State with all the info for the new task
@@ -118,7 +157,9 @@ fun FlowScreen(
                         onScrolled = { isHeaderMinimized = true },
                         onTaskClick = { onNavigateToTaskEditor(it.id) },
                         onTaskDelete = { task -> flowViewModel.onTaskSwiped(task) },
-                        onTaskToggle = { taskViewModel.toggleTaskDone(it) },
+                        onTaskToggle = flowViewModel::requestCompletion,
+                        onTaskReopen = flowViewModel::reopenTask,
+                        onCompletedTaskClick = { selectedCompletedTask = it },
                         onTaskReorder = { from, to -> flowViewModel.onTaskReorder(from, to) },
                         onIdeaClick = { onNavigateToIdeaEditor(it.id) },
                         onIdeaReorder = { from, to -> flowViewModel.onIdeaReorder(from, to) },
@@ -140,7 +181,10 @@ fun FlowScreen(
             onTaskClick = { isFabExpanded = false; showCreationSheet = true },
             onIdeaClick = { isFabExpanded = false; onNavigateToNewIdea(selectedCategoryId ?: Category.GENERAL_ID) },
             onCheckListClick = { isFabExpanded = false; onNavigateToCheckListEditor(null, selectedCategoryId ?: Category.GENERAL_ID) },
-            modifier = Modifier.align(Alignment.BottomEnd).zIndex(1f),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = bottomNavigationInset)
+                .zIndex(1f),
             visible = fabVisible,
         )
         if (showCreationSheet) {
@@ -173,10 +217,46 @@ fun FlowScreen(
                 )
             }
         }
+
+        (completionUiState as? TaskCompletionUiState.Draft)?.let { completionDraft ->
+            TaskCompletionSheet(
+                state = completionDraft,
+                onNoteChange = flowViewModel::updateCompletionNote,
+                onTakePhoto = {
+                    flowViewModel.prepareCameraCapture()?.let { uri ->
+                        runCatching { cameraLauncher.launch(uri) }
+                            .onFailure { flowViewModel.onCameraCaptureResult(false) }
+                    }
+                },
+                onChoosePhoto = {
+                    galleryLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                    )
+                },
+                onRemovePhoto = flowViewModel::removeCompletionPhoto,
+                onSubmit = { flowViewModel.submitCompletion(includeRecord = true) },
+                onSkip = { flowViewModel.submitCompletion(includeRecord = false) },
+                onDismiss = flowViewModel::dismissCompletion,
+            )
+        }
+
+        selectedCompletedTask?.let { completedTask ->
+            TaskCompletionDetailsSheet(
+                task = completedTask,
+                photoFile = flowViewModel.resolveCompletionPhoto(completedTask.completion?.photoId),
+                onReopen = {
+                    flowViewModel.reopenTask(completedTask)
+                    selectedCompletedTask = null
+                },
+                onDismiss = { selectedCompletedTask = null },
+            )
+        }
         AnimatedUndoFab(
             visible = showUndoButton,
             onUndoClick = { flowViewModel.undoPendingDeletions() },
-            modifier = Modifier.align(Alignment.BottomStart)
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = bottomNavigationInset)
         )
 
         // ── Create category dialog (opened from the trailing "+ New category" tab) ──

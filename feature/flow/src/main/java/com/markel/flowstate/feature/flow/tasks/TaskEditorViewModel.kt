@@ -13,6 +13,8 @@ import com.markel.flowstate.core.domain.usecase.tasks.DeleteTaskUseCase
 import com.markel.flowstate.core.domain.usecase.tasks.ToggleTaskUseCase
 import com.markel.flowstate.core.notifications.ReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +56,7 @@ class TaskEditorViewModel @Inject constructor(
 
     private val _editor = MutableStateFlow(TaskEditorState())
     val editor: StateFlow<TaskEditorState> = _editor.asStateFlow()
+    private var completionMutationJob: Job? = null
 
     /** User categories, exposed so the editor can populate the category selector. */
     val categories: StateFlow<List<Category>> = categoryRepository.getCategories()
@@ -100,7 +103,11 @@ class TaskEditorViewModel @Inject constructor(
     ) {
         if (newTitle.isBlank()) return
         viewModelScope.launch {
-            val updatedTask = originalTask.copy(
+            completionMutationJob?.join()
+            val authoritativeTask = repository.getTaskById(originalTask.id)
+                ?: originalTask.takeIf { completionMutationJob == null }
+                ?: return@launch
+            val updatedTask = authoritativeTask.copy(
                 title = newTitle,
                 description = newDescription,
                 priority = newPriority,
@@ -109,7 +116,10 @@ class TaskEditorViewModel @Inject constructor(
                 subTasks = newSubTasks
             )
             repository.upsertTask(updatedTask)
-            reconcileSubTaskAlarms(original = originalTask, updated = updatedTask)
+            _editor.update { state ->
+                if (state.task?.id == updatedTask.id) state.copy(task = updatedTask) else state
+            }
+            reconcileSubTaskAlarms(original = authoritativeTask, updated = updatedTask)
         }
     }
 
@@ -127,7 +137,15 @@ class TaskEditorViewModel @Inject constructor(
         val task = _editor.value.task ?: return
         _editor.update { it.copy(categoryId = categoryId) }
         viewModelScope.launch {
-            repository.upsertTask(task.copy(categoryId = categoryId ?: Category.GENERAL_ID))
+            completionMutationJob?.join()
+            val authoritativeTask = repository.getTaskById(task.id)
+                ?: task.takeIf { completionMutationJob == null }
+                ?: return@launch
+            val updated = authoritativeTask.copy(categoryId = categoryId ?: Category.GENERAL_ID)
+            repository.upsertTask(updated)
+            _editor.update { state ->
+                if (state.task?.id == updated.id) state.copy(task = updated) else state
+            }
         }
     }
 
@@ -138,11 +156,18 @@ class TaskEditorViewModel @Inject constructor(
         _editor.update { it.copy(reminderTime = effectiveValue) }
 
         viewModelScope.launch {
+            completionMutationJob?.join()
+            val authoritativeTask = repository.getTaskById(task.id)
+                ?: task.takeIf { completionMutationJob == null }
+                ?: return@launch
             // Cancel the old alarm regardless of whether we're setting a new one.
             reminderScheduler.cancel(task.id)
 
-            val updated = task.copy(reminderTime = value)
+            val updated = authoritativeTask.copy(reminderTime = effectiveValue)
             repository.upsertTask(updated)
+            _editor.update { state ->
+                if (state.task?.id == updated.id) state.copy(task = updated) else state
+            }
 
             if (effectiveValue != null) {
                 reminderScheduler.schedule(task.id, task.title, task.description, effectiveValue)
@@ -151,16 +176,58 @@ class TaskEditorViewModel @Inject constructor(
     }
 
     fun toggleDone() {
+        if (completionMutationJob?.isActive == true) return
         val current = _editor.value.task ?: return
         val newIsDone = !_editor.value.isDone
+        // ToggleTaskUseCase decides between complete/reopen from Task.isDone.
+        // The persisted Task snapshot can be stale if the post-commit read failed,
+        // so derive that input from the editor's explicit target state instead.
+        val toggleInput = current.copy(isDone = !newIsDone)
         _editor.update { it.copy(isDone = newIsDone) }
-        viewModelScope.launch {
-            toggleTaskUseCase(current)
-            if (newIsDone) {
-                reminderScheduler.cancel(current.id)
-                current.subTasks.filter { it.reminderTime != null }.forEach { subTask ->
-                    reminderScheduler.cancelSubTask(subTask.id)
+        completionMutationJob = viewModelScope.launch {
+            try {
+                toggleTaskUseCase(toggleInput)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _editor.update { state ->
+                    if (state.task?.id == current.id) state.copy(isDone = !newIsDone) else state
                 }
+                return@launch
+            }
+
+            if (newIsDone) {
+                try {
+                    reminderScheduler.cancel(current.id)
+                    current.subTasks.filter { it.reminderTime != null }.forEach { subTask ->
+                        reminderScheduler.cancelSubTask(subTask.id)
+                    }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    // Completion is already committed; alarm cleanup is best-effort.
+                }
+            }
+            try {
+                repository.getTaskById(current.id)?.let { persisted ->
+                    _editor.update { state ->
+                        if (state.task?.id == persisted.id) {
+                            state.copy(
+                                task = persisted,
+                                priority = persisted.priority,
+                                dueDate = persisted.dueDate,
+                                reminderTime = persisted.reminderTime,
+                                isDone = persisted.isDone,
+                                categoryId = persisted.categoryId,
+                            )
+                        } else state
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // Keep the committed optimistic state. Future edits will require
+                // an authoritative read before writing any full task entity.
             }
         }
     }

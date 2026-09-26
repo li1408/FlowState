@@ -16,6 +16,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -23,6 +25,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.markel.flowstate.components.FlowBottomBar
 import com.markel.flowstate.components.PlaceholderScreen
+import com.markel.flowstate.benchmarking.BenchmarkFixtureSeeder
+import com.markel.flowstate.benchmarking.BenchmarkFixtureSeeder.Companion.RESET_EXTRA
+import com.markel.flowstate.components.feedback.CompletionFeedbackEffects
+import com.markel.flowstate.core.designsystem.feedback.LocalCompletionCelebrationHostState
 import com.markel.flowstate.core.designsystem.theme.FlowStateTheme
 import com.markel.flowstate.core.designsystem.ui.LocalAnimatedVisibilityScope
 import com.markel.flowstate.core.designsystem.ui.LocalSharedTransitionScope
@@ -37,13 +43,27 @@ import com.markel.flowstate.navigation.fromKey
 import com.markel.flowstate.navigation.rememberNavigationState
 import com.markel.flowstate.navigation.toKey
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var benchmarkFixtureSeeder: BenchmarkFixtureSeeder
+
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        if (intent.getBooleanExtra(RESET_EXTRA, false)) {
+            // This branch is a no-op in the production application id. Keeping
+            // fixture setup synchronous makes every benchmark start from the
+            // same complete 30-card snapshot before UIAutomator proceeds.
+            runBlocking(Dispatchers.IO) {
+                benchmarkFixtureSeeder.resetIfBenchmarkBuild()
+            }
+        }
         enableEdgeToEdge()
         setContent {
             val mainViewModel: MainViewModel = hiltViewModel()
@@ -96,6 +116,7 @@ class MainActivity : ComponentActivity() {
                         topLevelRoutes = topLevelRoutes,
                     )
                     val navigator = remember(navigationState) { FlowStateNavigator(navigationState) }
+                    var tabTransitionDirection by remember { mutableIntStateOf(0) }
 
                     // On first composition, switch to the persisted initial tab
                     // (rememberSerializable restores topLevelRoute = startRoute by default).
@@ -115,34 +136,49 @@ class MainActivity : ComponentActivity() {
                             }
                     }
 
-                    SharedTransitionLayout(
-                        modifier = Modifier.fillMaxSize().clipToBounds()
+                    val completionCelebrationHostState =
+                        mainViewModel.completionCelebrationHostState
+                    CompositionLocalProvider(
+                        LocalCompletionCelebrationHostState provides completionCelebrationHostState,
                     ) {
-                        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                            FlowStateNavDisplay(
-                                navigationState = navigationState,
-                                navigator = navigator,
-                                bottomNavOrder = bottomNavOrder,
-                                bottomNavHidden = bottomNavHidden,
-                                onBottomNavConfigChanged = mainViewModel::saveBottomNavConfig,
-                                themeMode = themeMode,
-                                dynamicColor = dynamicColor,
-                                pureSurfaces = pureSurfaces,
-                                systemFont = systemFont,
-                                onThemeModeChange = mainViewModel::saveThemeMode,
-                                onDynamicColorChange = mainViewModel::saveDynamicColor,
-                                onPureSurfacesChange = mainViewModel::savePureSurfaces,
-                                onSystemFontChange = mainViewModel::saveSystemFont,
-                                sharedTransitionScope = this,
-                                bottomBar = {
-                                    FlowBottomBar(
-                                        topLevelRoute = navigationState.topLevelRoute,
-                                        onNavigate = { key -> navigator.navigate(key) },
-                                        isLandscape = isLandscape,
-                                        items = visibleBottomNavItems
-                                    )
-                                },
-                            )
+                        CompletionFeedbackEffects(completionCelebrationHostState)
+                        SharedTransitionLayout(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clipToBounds()
+                                .semantics { testTagsAsResourceId = true },
+                        ) {
+                            CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                                FlowStateNavDisplay(
+                                    navigationState = navigationState,
+                                    navigator = navigator,
+                                    bottomNavOrder = bottomNavOrder,
+                                    bottomNavHidden = bottomNavHidden,
+                                    onBottomNavConfigChanged = mainViewModel::saveBottomNavConfig,
+                                    themeMode = themeMode,
+                                    dynamicColor = dynamicColor,
+                                    pureSurfaces = pureSurfaces,
+                                    systemFont = systemFont,
+                                    onThemeModeChange = mainViewModel::saveThemeMode,
+                                    onDynamicColorChange = mainViewModel::saveDynamicColor,
+                                    onPureSurfacesChange = mainViewModel::savePureSurfaces,
+                                    onSystemFontChange = mainViewModel::saveSystemFont,
+                                    sharedTransitionScope = this,
+                                    tabTransitionDirection = tabTransitionDirection,
+                                    bottomBar = { backdrop ->
+                                        FlowBottomBar(
+                                            topLevelRoute = navigationState.topLevelRoute,
+                                            onNavigate = { key, visualDirection ->
+                                                tabTransitionDirection = visualDirection
+                                                navigator.navigate(key)
+                                            },
+                                            isLandscape = isLandscape,
+                                            backdrop = backdrop,
+                                            items = visibleBottomNavItems
+                                        )
+                                    },
+                                )
+                            }
                         }
                     }
                 }

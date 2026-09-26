@@ -13,8 +13,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * and which version of the database we are using.
  */
 @Database(
-    entities = [TaskEntity::class, SubTaskEntity::class, IdeaEntity::class, CheckListEntity::class, CheckListItemEntity::class, HabitEntity::class, HabitEntryEntity::class, HabitNumericEntryEntity::class, CategoryEntity::class], // List of all tables
-    version = 20,
+    entities = [TaskEntity::class, SubTaskEntity::class, TaskCompletionRecordEntity::class, IdeaEntity::class, CheckListEntity::class, CheckListItemEntity::class, HabitEntity::class, HabitEntryEntity::class, HabitNumericEntryEntity::class, CategoryEntity::class], // List of all tables
+    version = 21,
     exportSchema = true
 )
 @TypeConverters(HabitConverters::class)
@@ -364,6 +364,32 @@ abstract class FlowStateDatabase : RoomDatabase() {
                 db.execSQL(
                     "INSERT INTO sqlite_sequence (name, seq) " +
                             "SELECT 'habits', COALESCE(MAX(id), 0) FROM habits"
+                )
+            }
+        }
+
+        val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS task_completion_records (
+                        taskId INTEGER NOT NULL,
+                        note TEXT,
+                        photoId TEXT,
+                        completedAt INTEGER NOT NULL,
+                        PRIMARY KEY(taskId),
+                        FOREIGN KEY(taskId) REFERENCES tasks(id)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO task_completion_records (taskId, note, photoId, completedAt)
+                    SELECT id, NULL, NULL, COALESCE(completedAt, 0)
+                    FROM tasks
+                    WHERE isDone = 1
+                    """.trimIndent(),
                 )
             }
         }

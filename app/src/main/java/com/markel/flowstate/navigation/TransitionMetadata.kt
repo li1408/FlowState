@@ -6,8 +6,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.NavMetadataKey
 import androidx.navigation3.runtime.metadata
 import androidx.navigation3.ui.NavDisplay
 
@@ -25,6 +29,7 @@ import androidx.navigation3.ui.NavDisplay
 
 private const val FADE_MS = 220
 private const val SLIDE_MS = 280
+internal object TopLevelRouteMeta : NavMetadataKey<NavKey>
 
 /**
  * Fade in/out — used for tab switches within the decorated scene.
@@ -97,5 +102,47 @@ fun fullScreenSharedBounds(durationMillis: Int = 250) = metadata {
     }
     put(NavDisplay.PredictivePopTransitionKey) {
         EnterTransition.None togetherWith fadeOut(tween(durationMillis))
+    }
+}
+
+/**
+ * Cross-fades top-level pages while moving them a restrained 10 dp in the
+ * same visual direction as the liquid selection lens.
+ */
+fun topLevelTabTransition(
+    visualDirection: () -> Int,
+    distancePx: Int,
+    durationMillis: Int = FADE_MS,
+    tabKey: TabKey? = null,
+) = metadata {
+    if (tabKey != null) put(TopLevelRouteMeta, tabKey)
+    put(NavDisplay.TransitionKey) {
+        val direction = visualDirection().coerceIn(-1, 1)
+        (fadeIn(animationSpec = tween(durationMillis)) +
+            slideInHorizontally(
+                initialOffsetX = { direction * distancePx },
+                animationSpec = tween(durationMillis),
+            )) togetherWith
+            (fadeOut(animationSpec = tween(durationMillis)) +
+                slideOutHorizontally(
+                    targetOffsetX = { -direction * distancePx },
+                    animationSpec = tween(durationMillis),
+                ))
+    }
+    put(NavDisplay.PopTransitionKey) {
+        val direction = visualDirection().coerceIn(-1, 1)
+        (fadeIn(animationSpec = tween(durationMillis)) +
+            slideInHorizontally(
+                initialOffsetX = { -direction * distancePx },
+                animationSpec = tween(durationMillis),
+            )) togetherWith
+            (fadeOut(animationSpec = tween(durationMillis)) +
+                slideOutHorizontally(
+                    targetOffsetX = { direction * distancePx },
+                    animationSpec = tween(durationMillis),
+                ))
+    }
+    put(NavDisplay.PredictivePopTransitionKey) {
+        EnterTransition.None togetherWith fadeOut(animationSpec = tween(durationMillis))
     }
 }

@@ -33,5 +33,6 @@ data class Task(
     val completedAt: Long? = null,
     val reminderTime: Long? = null,
     val categoryId: Int? = null,
-    val subTasks: List<SubTask> = emptyList()
+    val subTasks: List<SubTask> = emptyList(),
+    val completion: TaskCompletion? = null,
 )

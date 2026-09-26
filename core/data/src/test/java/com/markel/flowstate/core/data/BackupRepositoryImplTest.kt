@@ -4,6 +4,8 @@ import com.markel.flowstate.core.data.backup.BackupRepositoryImpl
 import com.markel.flowstate.core.data.backup.FlowStateExport
 import com.markel.flowstate.core.data.backup.RestoreErrorType
 import com.markel.flowstate.core.data.backup.RestoreResult
+import com.markel.flowstate.core.data.backup.TaskCompletionRecordSchema
+import com.markel.flowstate.core.data.backup.TaskSchema
 import com.markel.flowstate.core.data.local.CategoryDao
 import com.markel.flowstate.core.data.local.CategoryEntity
 import com.markel.flowstate.core.data.local.CheckListDao
@@ -20,6 +22,7 @@ import com.markel.flowstate.core.data.local.IdeaDao
 import com.markel.flowstate.core.data.local.IdeaEntity
 import com.markel.flowstate.core.data.local.SubTaskEntity
 import com.markel.flowstate.core.data.local.TaskDao
+import com.markel.flowstate.core.data.local.TaskCompletionRecordEntity
 import com.markel.flowstate.core.data.local.TaskEntity
 import com.markel.flowstate.core.data.local.TaskWithSubTasks
 import com.markel.flowstate.core.domain.Category
@@ -766,6 +769,204 @@ class BackupRepositoryImplTest {
         }
     }
 
+    @Test
+    fun restoreFromJson_sameCompletion_preservesExistingLocalPhoto() = runTest {
+        val completedAt = 1_790_000_000_000L
+        val photoId = "11111111-1111-4111-8111-111111111111.jpg"
+        coEvery { categoryDao.getAllCategoriesOnce() } returns emptyList()
+        coEvery { taskDao.getCompletionRecord(1) } returns TaskCompletionRecordEntity(
+            taskId = 1,
+            note = "local note",
+            photoId = photoId,
+            completedAt = completedAt,
+        )
+
+        val json = Json.encodeToString(
+            FlowStateExport.serializer(),
+            emptyExport(
+                tasks = listOf(
+                    TaskSchema(
+                        id = 1,
+                        title = "Completed task",
+                        description = "",
+                        isDone = true,
+                        position = 0,
+                        priority = 0,
+                        completedAt = completedAt,
+                    ),
+                ),
+                completionRecords = listOf(
+                    TaskCompletionRecordSchema(
+                        taskId = 1,
+                        note = "restored note",
+                        photoId = null,
+                        completedAt = completedAt,
+                    ),
+                ),
+            ),
+        )
+
+        val result = repository.restoreFromJson(json)
+
+        assertTrue(result is RestoreResult.Success)
+        coVerify(exactly = 1) {
+            taskDao.upsertCompletionRecord(match {
+                it.taskId == 1 &&
+                    it.note == "restored note" &&
+                    it.photoId == photoId &&
+                    it.completedAt == completedAt
+            })
+        }
+    }
+
+    @Test
+    fun restoreFromJson_duplicateCompletionTaskIds_isRejectedBeforeWrites() = runTest {
+        val completedAt = 1_790_000_000_000L
+        val record = TaskCompletionRecordSchema(
+            taskId = 1,
+            completedAt = completedAt,
+        )
+        val json = Json.encodeToString(
+            FlowStateExport.serializer(),
+            emptyExport(
+                tasks = listOf(
+                    TaskSchema(
+                        id = 1,
+                        title = "Completed task",
+                        description = "",
+                        isDone = true,
+                        position = 0,
+                        priority = 0,
+                        completedAt = completedAt,
+                    ),
+                ),
+                completionRecords = listOf(record, record),
+            ),
+        )
+
+        val result = repository.restoreFromJson(json)
+
+        assertTrue(result is RestoreResult.Error)
+        assertEquals(RestoreErrorType.INVALID_FILE, (result as RestoreResult.Error).type)
+        coVerify(exactly = 0) { taskDao.upsertTaskEntity(any()) }
+        coVerify(exactly = 0) { taskDao.upsertCompletionRecord(any()) }
+    }
+
+    @Test
+    fun restoreFromJson_legacyDoneWithoutTimestamp_acceptsExplicitSentinelRecord() = runTest {
+        coEvery { categoryDao.getAllCategoriesOnce() } returns emptyList()
+        val json = Json.encodeToString(
+            FlowStateExport.serializer(),
+            emptyExport(
+                tasks = listOf(legacyCompletedTask()),
+                completionRecords = listOf(
+                    TaskCompletionRecordSchema(taskId = 1, completedAt = 0L),
+                ),
+            ),
+        )
+
+        val result = repository.restoreFromJson(json)
+
+        assertTrue(result is RestoreResult.Success)
+        coVerify(exactly = 1) {
+            taskDao.upsertCompletionRecord(match { it.taskId == 1 && it.completedAt == 0L })
+        }
+    }
+
+    @Test
+    fun restoreFromJson_legacyDoneWithoutRecord_synthesizesSentinelRecord() = runTest {
+        coEvery { categoryDao.getAllCategoriesOnce() } returns emptyList()
+        val json = Json.encodeToString(
+            FlowStateExport.serializer(),
+            emptyExport(tasks = listOf(legacyCompletedTask())),
+        )
+
+        val result = repository.restoreFromJson(json)
+
+        assertTrue(result is RestoreResult.Success)
+        coVerify(exactly = 1) {
+            taskDao.upsertCompletionRecord(match { it.taskId == 1 && it.completedAt == 0L })
+        }
+    }
+
+    @Test
+    fun restoreFromJson_legacyDoneWithoutTimestamp_rejectsNonSentinelRecord() = runTest {
+        val json = Json.encodeToString(
+            FlowStateExport.serializer(),
+            emptyExport(
+                tasks = listOf(legacyCompletedTask()),
+                completionRecords = listOf(
+                    TaskCompletionRecordSchema(taskId = 1, completedAt = 123L),
+                ),
+            ),
+        )
+
+        val result = repository.restoreFromJson(json)
+
+        assertTrue(result is RestoreResult.Error)
+        assertEquals(RestoreErrorType.INVALID_FILE, (result as RestoreResult.Error).type)
+        coVerify(exactly = 0) { taskDao.upsertTaskEntity(any()) }
+    }
+
+    @Test
+    fun restoreFromJson_doneWithNegativeTimestampAndNoRecord_isRejectedBeforeWrites() = runTest {
+        val json = Json.encodeToString(
+            FlowStateExport.serializer(),
+            emptyExport(
+                tasks = listOf(
+                    TaskSchema(
+                        id = 1,
+                        title = "Invalid completed task",
+                        description = "",
+                        isDone = true,
+                        position = 0,
+                        priority = 0,
+                        completedAt = -1L,
+                    ),
+                ),
+            ),
+        )
+
+        val result = repository.restoreFromJson(json)
+
+        assertTrue(result is RestoreResult.Error)
+        assertEquals(RestoreErrorType.INVALID_FILE, (result as RestoreResult.Error).type)
+        coVerify(exactly = 0) { categoryDao.getAllCategoriesOnce() }
+        coVerify(exactly = 0) { taskDao.upsertTaskEntity(any()) }
+        coVerify(exactly = 0) { taskDao.upsertCompletionRecord(any()) }
+    }
+
+    @Test
+    fun restoreFromJson_pendingTask_acceptsDormantCompletionRecord() = runTest {
+        coEvery { categoryDao.getAllCategoriesOnce() } returns emptyList()
+        val json = Json.encodeToString(
+            FlowStateExport.serializer(),
+            emptyExport(
+                tasks = listOf(
+                    TaskSchema(
+                        id = 1,
+                        title = "Reopened",
+                        description = "",
+                        isDone = false,
+                        position = 0,
+                        priority = 0,
+                        completedAt = null,
+                    ),
+                ),
+                completionRecords = listOf(
+                    TaskCompletionRecordSchema(taskId = 1, completedAt = 456L),
+                ),
+            ),
+        )
+
+        val result = repository.restoreFromJson(json)
+
+        assertTrue(result is RestoreResult.Success)
+        coVerify(exactly = 1) {
+            taskDao.upsertCompletionRecord(match { it.taskId == 1 && it.completedAt == 456L })
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     //  HELPERS
     // ═══════════════════════════════════════════════════════════════════
@@ -789,6 +990,31 @@ class BackupRepositoryImplTest {
         )
         return Json.encodeToString(FlowStateExport.serializer(), export)
     }
+
+    private fun emptyExport(
+        tasks: List<TaskSchema> = emptyList(),
+        completionRecords: List<TaskCompletionRecordSchema> = emptyList(),
+    ) = FlowStateExport(
+        tasks = tasks,
+        subTasks = emptyList(),
+        ideas = emptyList(),
+        checkLists = emptyList(),
+        checkListItems = emptyList(),
+        habits = emptyList(),
+        habitEntries = emptyList(),
+        habitNumericEntries = emptyList(),
+        completionRecords = completionRecords,
+    )
+
+    private fun legacyCompletedTask() = TaskSchema(
+        id = 1,
+        title = "Legacy completed task",
+        description = "",
+        isDone = true,
+        position = 0,
+        priority = 0,
+        completedAt = null,
+    )
 
 
     /**

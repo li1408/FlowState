@@ -13,12 +13,16 @@ import com.markel.flowstate.core.domain.usecase.tasks.ToggleTaskUseCase
 import com.markel.flowstate.core.notifications.ReminderScheduler
 import com.markel.flowstate.core.testing.util.MainDispatcherRule
 import io.mockk.coVerify
+import io.mockk.coEvery
+import kotlinx.coroutines.CompletableDeferred
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -34,6 +38,14 @@ class TaskEditorViewModelTest {
     private val categoryRepository: CategoryRepository = mockk(relaxed = true)
     private val userPreferencesRepository: UserPreferencesRepository = mockk(relaxed = true)
     private lateinit var viewModel: TaskEditorViewModel
+
+    @Before
+    fun setUp() {
+        // Production repositories return null when the task is missing. A relaxed
+        // MockK nullable data-class return otherwise becomes a child mock, which
+        // makes copy() fail before the behavior under test is reached.
+        coEvery { repository.getTaskById(any()) } returns null
+    }
 
     @Test
     fun initialState_isEmpty() = runTest {
@@ -170,6 +182,7 @@ class TaskEditorViewModelTest {
         // GIVEN
         val task = Task(id = 1, title = "Task", isDone = false)
         every { repository.getTasks() } returns flowOf(listOf(task))
+        coEvery { repository.getTaskById(1) } returns task.copy(isDone = true, completedAt = 123L)
         viewModel = TaskEditorViewModel(repository, toggleTaskUseCase, deleteTaskUseCase, reminderScheduler, categoryRepository, userPreferencesRepository)
 
         viewModel.loadTask(1)
@@ -179,10 +192,131 @@ class TaskEditorViewModelTest {
 
         // THEN - State updates optimistically
         viewModel.editor.test {
-            assertEquals(true, awaitItem().isDone)
+            val state = awaitItem()
+            assertEquals(true, state.isDone)
+            assertEquals(true, state.task?.isDone)
         }
         // AND - Use case is called
         coVerify { toggleTaskUseCase(task) }
+    }
+
+    @Test
+    fun updateAfterCompletion_usesAuthoritativeCompletionFields() = runTest {
+        val task = Task(id = 1, title = "Task", isDone = false, categoryId = 1)
+        val completed = task.copy(isDone = true, completedAt = 123L)
+        every { repository.getTasks() } returns flowOf(listOf(task))
+        coEvery { repository.getTaskById(1) } returns completed
+        viewModel = TaskEditorViewModel(repository, toggleTaskUseCase, deleteTaskUseCase, reminderScheduler, categoryRepository, userPreferencesRepository)
+        viewModel.loadTask(1)
+
+        viewModel.toggleDone()
+        viewModel.updateCategory(2)
+
+        coVerify {
+            repository.upsertTask(match {
+                it.id == 1 && it.categoryId == 2 && it.isDone && it.completedAt == 123L
+            })
+        }
+    }
+
+    @Test
+    fun toggleDone_whileMutationIsRunning_isSubmittedOnlyOnce() = runTest {
+        val task = Task(id = 1, title = "Task", isDone = false)
+        val mutationStarted = CompletableDeferred<Unit>()
+        val finishMutation = CompletableDeferred<Unit>()
+        every { repository.getTasks() } returns flowOf(listOf(task))
+        coEvery { toggleTaskUseCase(task) } coAnswers {
+            mutationStarted.complete(Unit)
+            finishMutation.await()
+        }
+        coEvery { repository.getTaskById(1) } returns task.copy(isDone = true, completedAt = 123L)
+        viewModel = TaskEditorViewModel(repository, toggleTaskUseCase, deleteTaskUseCase, reminderScheduler, categoryRepository, userPreferencesRepository)
+        viewModel.loadTask(1)
+
+        viewModel.toggleDone()
+        mutationStarted.await()
+        viewModel.toggleDone()
+        finishMutation.complete(Unit)
+
+        coVerify(exactly = 1) { toggleTaskUseCase(task) }
+    }
+
+    @Test
+    fun reminderCleanupFailure_afterCommit_doesNotRollbackEditorState() = runTest {
+        val task = Task(id = 1, title = "Task", isDone = false, reminderTime = 999L)
+        every { repository.getTasks() } returns flowOf(listOf(task))
+        every { reminderScheduler.cancel(1) } throws IllegalStateException("alarm service failed")
+        coEvery { repository.getTaskById(1) } returns task.copy(
+            isDone = true,
+            completedAt = 123L,
+            reminderTime = null,
+        )
+        viewModel = TaskEditorViewModel(repository, toggleTaskUseCase, deleteTaskUseCase, reminderScheduler, categoryRepository, userPreferencesRepository)
+        viewModel.loadTask(1)
+
+        viewModel.toggleDone()
+
+        viewModel.editor.test {
+            assertEquals(true, awaitItem().isDone)
+        }
+    }
+
+    @Test
+    fun toggleDone_afterCommittedStateReadFails_reopensUsingOptimisticState() = runTest {
+        val task = Task(id = 1, title = "Task", isDone = false)
+        every { repository.getTasks() } returns flowOf(listOf(task))
+        coEvery { repository.getTaskById(1) } throws IllegalStateException("read failed")
+        viewModel = TaskEditorViewModel(
+            repository,
+            toggleTaskUseCase,
+            deleteTaskUseCase,
+            reminderScheduler,
+            categoryRepository,
+            userPreferencesRepository,
+        )
+        viewModel.loadTask(1)
+
+        viewModel.toggleDone()
+        advanceUntilIdle()
+        assertEquals(true, viewModel.editor.value.isDone)
+
+        viewModel.toggleDone()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { toggleTaskUseCase(match { !it.isDone }) }
+        coVerify(exactly = 1) { toggleTaskUseCase(match { it.isDone }) }
+        assertEquals(false, viewModel.editor.value.isDone)
+    }
+
+    @Test
+    fun toggleDone_afterCommittedStateReadFails_failedReopenRestoresPreviousUiState() = runTest {
+        val task = Task(id = 1, title = "Task", isDone = false)
+        var toggleCalls = 0
+        every { repository.getTasks() } returns flowOf(listOf(task))
+        coEvery { repository.getTaskById(1) } throws IllegalStateException("read failed")
+        coEvery { toggleTaskUseCase(any()) } coAnswers {
+            toggleCalls += 1
+            if (toggleCalls == 2) throw IllegalStateException("reopen failed")
+        }
+        viewModel = TaskEditorViewModel(
+            repository,
+            toggleTaskUseCase,
+            deleteTaskUseCase,
+            reminderScheduler,
+            categoryRepository,
+            userPreferencesRepository,
+        )
+        viewModel.loadTask(1)
+
+        viewModel.toggleDone()
+        advanceUntilIdle()
+        assertEquals(true, viewModel.editor.value.isDone)
+
+        viewModel.toggleDone()
+        advanceUntilIdle()
+
+        assertEquals(true, viewModel.editor.value.isDone)
+        coVerify(exactly = 1) { toggleTaskUseCase(match { it.isDone }) }
     }
 
     @Test

@@ -21,11 +21,12 @@ data class FlowStateExport(
     val habits: List<HabitSchema>,
     val habitEntries: List<HabitEntrySchema>,
     val habitNumericEntries: List<HabitNumericEntrySchema>,
-    val categories: List<CategorySchema> = emptyList()
+    val categories: List<CategorySchema> = emptyList(),
+    val completionRecords: List<TaskCompletionRecordSchema> = emptyList(),
 ) {
     companion object {
         /** Must match the Room database version so restores stay consistent. */
-        const val CURRENT_SCHEMA_VERSION = 20
+        const val CURRENT_SCHEMA_VERSION = 21
     }
 }
 
@@ -130,4 +131,16 @@ data class CategorySchema(
     val id: Int,
     val name: String,
     val position: Int
+)
+
+@Serializable
+data class TaskCompletionRecordSchema(
+    val taskId: Int,
+    val note: String? = null,
+    /**
+     * Reserved for a future media archive format. JSON backups intentionally
+     * export this as null so they never create a reference to a missing file.
+     */
+    val photoId: String? = null,
+    val completedAt: Long,
 )

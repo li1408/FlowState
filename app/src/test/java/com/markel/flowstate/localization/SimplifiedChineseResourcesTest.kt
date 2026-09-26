@@ -9,6 +9,70 @@ import org.w3c.dom.Element
 class SimplifiedChineseResourcesTest {
 
     @Test
+    fun userFacingBrand_isThirtyDayPlanAcrossEveryLocale() {
+        val root = repositoryRoot()
+        val brandedResourceFiles = listOf(
+            "app/src/main/res/values/strings.xml",
+            "app/src/main/res/values-en/strings.xml",
+            "app/src/main/res/values-es/strings.xml",
+            "app/src/main/res/values-zh-rCN/strings.xml",
+            "feature/flow/src/main/res/values/strings.xml",
+            "feature/flow/src/main/res/values-en/strings.xml",
+            "feature/flow/src/main/res/values-es/strings.xml",
+            "feature/flow/src/main/res/values-zh-rCN/strings.xml",
+            "feature/settings/src/main/res/values/strings.xml",
+            "feature/settings/src/main/res/values-en/strings.xml",
+            "feature/settings/src/main/res/values-es/strings.xml",
+            "feature/settings/src/main/res/values-zh-rCN/strings.xml",
+        )
+        val violations = brandedResourceFiles.mapNotNull { relativePath ->
+            val file = File(root, relativePath)
+            when {
+                !file.isFile -> "$relativePath is missing"
+                "FlowState" in file.readText() -> "$relativePath still exposes the old FlowState brand"
+                "30天计划" !in file.readText() -> "$relativePath does not expose the 30天计划 brand"
+                else -> null
+            }
+        }.toMutableList()
+
+        brandedResourceFiles.take(4).forEach { relativePath ->
+            val file = File(root, relativePath)
+            if (!file.isFile) return@forEach
+            val appName = parseResources(file.parentFile)
+                .get(ResourceKey(ResourceKind.STRING, "app_name"))
+                ?.values
+                ?.get(SINGLE_VALUE)
+            if (appName != APP_NAME) {
+                violations += "$relativePath defines app_name as '$appName' instead of '$APP_NAME'"
+            }
+        }
+
+        val manifest = newDocumentBuilderFactory().newDocumentBuilder()
+            .parse(File(root, "app/src/main/AndroidManifest.xml"))
+        val application = manifest.getElementsByTagName("application").item(0) as? Element
+        if (application?.getAttribute("android:label") != APP_NAME_REFERENCE) {
+            violations += "AndroidManifest application label must reference $APP_NAME_REFERENCE"
+        }
+        val mainActivity = manifest.getElementsByTagName("activity")
+            .let { activities ->
+                (0 until activities.length)
+                    .mapNotNull { activities.item(it) as? Element }
+                    .firstOrNull { it.getAttribute("android:name") == ".MainActivity" }
+            }
+        if (mainActivity?.getAttribute("android:label") != APP_NAME_REFERENCE) {
+            violations += "AndroidManifest MainActivity label must reference $APP_NAME_REFERENCE"
+        }
+
+        assertTrue(
+            buildString {
+                appendLine("User-facing brand contract violations (${violations.size}):")
+                violations.forEach { appendLine("- $it") }
+            },
+            violations.isEmpty(),
+        )
+    }
+
+    @Test
     fun simplifiedChineseResources_coverEveryTranslatableDefaultResource() {
         val root = repositoryRoot()
         val violations = mutableListOf<String>()
@@ -330,6 +394,8 @@ class SimplifiedChineseResourcesTest {
     }
 
     private companion object {
+        const val APP_NAME = "30天计划"
+        const val APP_NAME_REFERENCE = "@string/app_name"
         const val SINGLE_VALUE = "value"
         const val OTHER_QUANTITY = "other"
 

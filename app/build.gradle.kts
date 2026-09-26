@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.hiltAndroid)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.plugin.serialization)
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 android {
@@ -31,6 +32,21 @@ android {
             )
             signingConfig = signingConfigs.getByName("debug")
         }
+        // The Baseline Profile plugin configures these declared build types with
+        // its required profileable/minification flags.
+        create("benchmarkRelease") {
+            applicationIdSuffix = ".benchmark"
+        }
+        create("nonMinifiedRelease") {
+            applicationIdSuffix = ".benchmark"
+        }
+    }
+    // Baseline Profile 1.5.0 copies the release Kotlin source set into its
+    // derived build types. Under AGP 9's legacy DSL the lazy default directory
+    // is otherwise copied as the invalid Windows path `provider(?)`.
+    sourceSets.named("release") {
+        kotlin.directories.clear()
+        kotlin.directories.addAll(listOf("src/release/kotlin", "src/release/java"))
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -46,6 +62,12 @@ android {
     androidResources {
         generateLocaleConfig = true
     }
+}
+
+baselineProfile {
+    automaticGenerationDuringBuild = false
+    mergeIntoMain = true
+    saveInSrc = true
 }
 
 dependencies {
@@ -66,6 +88,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.kotlinx.serialization.json)
 
     // ViewModel
@@ -79,6 +102,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.android.liquid.glass)
+    implementation(libs.kyant.capsule)
+    implementation(libs.konfetti.compose)
 
     // Navigation 3
     implementation(libs.navigation3.runtime)
@@ -101,4 +127,5 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    baselineProfile(project(":benchmark"))
 }

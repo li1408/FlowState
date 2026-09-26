@@ -46,7 +46,7 @@
     <string name="next">Next</string>
     <string name="reminder_time_title">Set time</string>
     <string name="permission_title">Time-sensitive reminders are turned off</string>
-    <string name="permission_body">To be notified at the right time, grant FlowState permission to set exact alarms.</string>
+    <string name="permission_body">To be notified at the right time, grant 30天计划 permission to set exact alarms.</string>
     <string name="permission_settings">Go to settings</string>
     <string name="reminder_past_time_error">Select a future time</string>
 
@@ -87,4 +87,31 @@
     <string name="access_create_task">Create task</string>
     <string name="access_close">Close</string>
     <string name="access_more_options">More options</string>
+    <string name="completion_sheet_title">Complete this task</string>
+    <string name="completion_sheet_subtitle">Save the moment for “%1$s”</string>
+    <string name="completion_note_label">Write about this moment (optional)</string>
+    <string name="completion_take_photo">Take photo</string>
+    <string name="completion_choose_photo">Choose from gallery</string>
+    <string name="completion_replace_photo">Replace photo</string>
+    <string name="completion_remove_photo">Remove photo</string>
+    <string name="completion_photo_preview">Completion photo preview</string>
+    <string name="completion_save">Save check-in and complete</string>
+    <string name="completion_skip">Complete without a check-in</string>
+    <string name="completion_processing_photo">Processing photo…</string>
+    <string name="completion_saving">Saving…</string>
+    <string name="completion_error_photo">Couldn’t process this photo. Try another one.</string>
+    <string name="completion_error_save">Couldn’t save the check-in. Your text and photo are still here.</string>
+    <string name="completion_error_missing_task">This task is no longer available.</string>
+    <string name="completion_error_already_completed">This task was completed elsewhere. Your text and photo are still here and were not overwritten.</string>
+    <string name="completion_progress">Completed %1$d/%2$d</string>
+    <string name="completion_remaining">%1$d remaining</string>
+    <string name="completion_completed_section">Completed (%1$d)</string>
+    <string name="completion_details_title">Completion record</string>
+    <string name="completion_no_note">No written note</string>
+    <string name="completion_mark_pending">Mark as pending</string>
+    <string name="completion_close">Close</string>
+    <string name="access_mark_task_complete">Mark task as complete</string>
+    <string name="access_mark_task_pending">Mark task as pending</string>
+    <string name="access_task_state_completed">Completed</string>
+    <string name="access_task_state_pending">Pending</string>
 </resources>

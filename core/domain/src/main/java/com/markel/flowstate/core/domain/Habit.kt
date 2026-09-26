@@ -42,3 +42,17 @@ data class HabitWithStatus(
 data class HabitEntryFlat(val habitId: Int, val epochDay: Long)
 
 data class HabitNumericEntry(val habitId: Int, val date: LocalDate, val value: Float)
+
+/**
+ * One combined emission for the habits dashboard.
+ *
+ * The three Room table flows are observed once each and combined here. This is
+ * not a cross-table SQLite transaction snapshot; later invalidations converge
+ * the dashboard to the latest values from all three tables.
+ */
+data class HabitDashboardData(
+    val habits: List<HabitWithStatus>,
+    val date: LocalDate,
+    val booleanEntriesByHabit: Map<Int, List<HabitEntryFlat>>,
+    val numericEntriesByHabit: Map<Int, List<HabitNumericEntry>>,
+)

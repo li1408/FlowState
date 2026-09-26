@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">FlowState</string>
+    <string name="app_name">30天计划</string>
+    <string name="completion_celebration_title">Challenge complete</string>
+    <string name="completion_celebration_progress">%1$d of %2$d complete · %3$d remaining</string>
+    <string name="completion_celebration_all_done">All %1$d challenges complete</string>
+    <string name="completion_celebration_announcement">%1$s. %2$s</string>
 </resources>

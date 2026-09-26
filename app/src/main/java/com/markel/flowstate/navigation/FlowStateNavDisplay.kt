@@ -2,30 +2,32 @@ package com.markel.flowstate.navigation
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.background
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavKey
+import com.kyant.backdrop.Backdrop
 import com.markel.flowstate.BuildConfig
 import com.markel.flowstate.components.PlaceholderScreen
+import com.markel.flowstate.components.liquidglass.rememberScreenBackdrop
 import com.markel.flowstate.core.data.MainTab
 import com.markel.flowstate.core.data.ThemeMode
 import com.markel.flowstate.core.designsystem.ui.LocalAnimatedVisibilityScope
@@ -84,18 +86,31 @@ fun FlowStateNavDisplay(
     onDynamicColorChange: (Boolean) -> Unit,
     onPureSurfacesChange: (Boolean) -> Unit,
     onSystemFontChange: (Boolean) -> Unit,
-    bottomBar: @Composable () -> Unit,
+    bottomBar: @Composable (Backdrop) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
+    tabTransitionDirection: Int,
     modifier: Modifier = Modifier,
 ) {
+    val backdrop = rememberScreenBackdrop()
+    val latestTabTransitionDirection = rememberUpdatedState(tabTransitionDirection)
+    val density = LocalDensity.current
+    val tabTransitionDistancePx = with(density) { 10.dp.roundToPx() }
     val sceneDecorator = rememberFlowStateSceneDecoratorStrategy(
         sharedTransitionScope = sharedTransitionScope,
+        backdrop = backdrop,
+        activeTopLevelRoute = navigationState.topLevelRoute,
         bottomBar = bottomBar,
     )
 
     val entryProvider = entryProvider {
         // ── TABS (decorated with the bottom bar) ────────────────────────
-        entry<TabKey.Tasks>(metadata = fadeTransition()) {
+        entry<TabKey.Tasks>(
+            metadata = topLevelTabTransition(
+                visualDirection = { latestTabTransitionDirection.value },
+                distancePx = tabTransitionDistancePx,
+                tabKey = TabKey.Tasks,
+            ),
+        ) {
             val flowViewModel: FlowViewModel = hiltViewModel()
             val lifecycleOwner = LocalLifecycleOwner.current
             DisposableEffect(lifecycleOwner) {
@@ -124,13 +139,25 @@ fun FlowStateNavDisplay(
             }
         }
 
-        entry<TabKey.Calendar>(metadata = fadeTransition()) {
+        entry<TabKey.Calendar>(
+            metadata = topLevelTabTransition(
+                visualDirection = { latestTabTransitionDirection.value },
+                distancePx = tabTransitionDistancePx,
+                tabKey = TabKey.Calendar,
+            ),
+        ) {
             val calendarViewModel: CalendarViewModel = hiltViewModel()
             CalendarScreen(viewModel = calendarViewModel)
         }
 
 
-        entry<TabKey.Habits>(metadata = fadeTransition()) {
+        entry<TabKey.Habits>(
+            metadata = topLevelTabTransition(
+                visualDirection = { latestTabTransitionDirection.value },
+                distancePx = tabTransitionDistancePx,
+                tabKey = TabKey.Habits,
+            ),
+        ) {
             HabitScreen(
                 onNavigateToDetail = { habitId ->
                     navigator.navigate(FullScreenKey.HabitDetail(habitId))
@@ -139,11 +166,23 @@ fun FlowStateNavDisplay(
         }
 
 
-        entry<TabKey.Mood>(metadata = fadeTransition()) {
+        entry<TabKey.Mood>(
+            metadata = topLevelTabTransition(
+                visualDirection = { latestTabTransitionDirection.value },
+                distancePx = tabTransitionDistancePx,
+                tabKey = TabKey.Mood,
+            ),
+        ) {
             PlaceholderScreen(stringResource(com.markel.flowstate.feature.tasks.R.string.mood))
         }
 
-        entry<TabKey.Settings>(metadata = fadeTransition()) {
+        entry<TabKey.Settings>(
+            metadata = topLevelTabTransition(
+                visualDirection = { latestTabTransitionDirection.value },
+                distancePx = tabTransitionDistancePx,
+                tabKey = TabKey.Settings,
+            ),
+        ) {
             val context = LocalContext.current
             val notificationSettingsProvider = remember {
                 NotificationSettingsIntentProvider(context)
@@ -290,15 +329,16 @@ fun FlowStateNavDisplay(
 
     CompositionLocalProvider(LocalSharedTransitionScope provides sharedTransitionScope) {
         NavDisplay(
-            // Use the entries overload so each tab's stack gets its own
-            // SaveableStateHolder + ViewModelStore decorators (applied inside
-            // NavigationState.toEntries). The `entries=` overload does NOT apply
-            // entryDecorators itself.
+            // The injected Backdrop is stable across every tab. Its recorder is
+            // attached inside the decorated scene to the page-content branch
+            // only; putting it here would also capture the bar that samples it
+            // and create a native RenderNode cycle.
             entries = navigationState.toEntries(entryProvider),
-            modifier = modifier,
+            modifier = modifier
+                .background(MaterialTheme.colorScheme.background),
             onBack = { navigator.goBack() },
             sceneDecoratorStrategies = listOf(sceneDecorator),
-            sharedTransitionScope = sharedTransitionScope
+            sharedTransitionScope = sharedTransitionScope,
         )
     }
 }

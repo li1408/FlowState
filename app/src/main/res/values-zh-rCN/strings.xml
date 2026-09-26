@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FlowState</string>
+    <string name="app_name">30天计划</string>
+    <string name="completion_celebration_title">完成打卡</string>
+    <string name="completion_celebration_progress">已完成 %1$d / %2$d · 还剩 %3$d 件</string>
+    <string name="completion_celebration_all_done">%1$d 件挑战全部完成</string>
+    <string name="completion_celebration_announcement">%1$s。%2$s</string>
 </resources>
